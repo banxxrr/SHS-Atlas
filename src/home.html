@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHS Atlas (beta)</title>
+<meta name="description" content="SHS Atlas beta: a student-made 3D map of Stevenson High School.">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap">
+<script>
+  // old shared links (#room=… / #from=…&to=…) still open the map
+  if (/(^|[#&])(room|from|to)=/.test(location.hash)) location.replace('map.html' + location.hash);
+</script>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #111111; --muted: #555555; --green: #007236; --link: #0000ee; --visited: #551a8b;
+    --warn-bg: #fff8c4; --warn-line: #c9a800; --line: #bbbbbb; --go-ink: #ffffff; --go-edge: #004d24;
+    --fun: "Comic Sans MS", "Comic Sans", "Comic Neue", "Chalkboard SE", cursive;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161616; --fg: #eeeeee; --muted: #aaaaaa; --green: #2fbf62; --link: #8ab4ff; --visited: #c6a6ff;
+      --warn-bg: #3a3310; --warn-line: #c9a800; --line: #444444; --go-ink: #04170b; --go-edge: #7fe0a3; color-scheme: dark;
+    }
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.5 Verdana, Geneva, Tahoma, sans-serif; }
+  ::selection { background: #fff200; color: #111; }
+  .page { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  header img { width: 58px; height: auto; }
+  h1 { font-family: var(--fun); color: var(--green); font-size: 42px; line-height: 1; margin: 0; }
+  .beta { display: inline-block; vertical-align: middle; font-family: var(--fun); font-size: 15px; font-weight: 700; color: #111; background: #ffd400; border: 1px solid #111; padding: 1px 7px; margin-left: 6px; transform: rotate(-4deg); position: relative; top: -4px; }
+  h2 { font-family: var(--fun); color: var(--green); font-size: 24px; margin: 30px 0 8px; }
+  p { margin: 10px 0; }
+  a { color: var(--link); text-underline-offset: 2px; }
+  a:visited { color: var(--visited); }
+  :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+  .warn { background: var(--warn-bg); border: 1px dashed var(--warn-line); padding: 10px 14px; margin: 18px 0; }
+  .warn b { font-family: var(--fun); font-size: 19px; }
+  .go { display: inline-block; margin: 6px 0 4px; font-family: var(--fun); font-weight: 700; font-size: 22px; color: var(--go-ink) !important; background: var(--green); text-decoration: none; padding: 12px 26px; border-radius: 6px; border: 2px solid var(--go-edge); box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+  .go:hover { filter: brightness(1.1); }
+  .go:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  ul.log { padding-left: 22px; margin: 6px 0; }
+  ul.log li { margin: 0 0 10px; }
+  ul.log b { font-family: var(--fun); }
+  .now { font-family: var(--fun); font-size: 13px; font-weight: 700; background: var(--green); color: var(--go-ink); padding: 0 6px; margin-left: 4px; }
+  .small { font-size: 13px; color: var(--muted); }
+  footer { margin-top: 30px; }
+  @media (prefers-reduced-motion: reduce) { .go:active { transform: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <img src="logo.png" alt="Stevenson Patriots logo">
+    <h1>SHS Atlas <span class="beta">BETA</span></h1>
+  </header>
+
+  <p>A 3D map of Stevenson High School with every room, plus walking directions from any room to any other room. Made by a student, not by the school.</p>
+
+  <div class="warn">
+    <b>Heads up, this is a beta!</b>
+    <p>It might be slow right now, especially on older phones, and some things are still being fixed. If SHS Atlas goes public it will get a login (security sign-in) so only Stevenson people can use it.</p>
+  </div>
+
+  <a class="go" href="map.html">Continue to the map &rarr;</a>
+  <p class="small">Works best on a phone or iPad. Use one finger to move and two fingers to zoom and turn.</p>
+
+  <hr>
+
+  <h2>Version history</h2>
+  <ul class="log">
+    <li><b>v0.8</b> <span class="now">CURRENT</span> (Oct 28, 2026): Much faster and stops crashing on phones. New touch controls like a maps app. Directions now start from straight above you, facing where you're going. Fixed the flickering ground around the stadium.</li>
+    <li><b>v0.7</b>: School colors and the Patriots logo. Red route line. Walls are darker so you can tell where you can't walk.</li>
+    <li><b>v0.6</b>: Brand new look: search bar on top, floor buttons on the side, swipe-up panel, dark mode.</li>
+    <li><b>v0.5</b>: Walking directions between any two rooms, an elevators-only option, Plan my day, and three ways into the pool (both locker rooms, plus the deck entrance after 3:30).</li>
+    <li><b>v0.4</b>: Level 3 added from the district campus map and checked against door photos. Level 4 (the rooftop greenhouse) added.</li>
+    <li><b>v0.3</b>: West Building levels 1 and 2 redone from the campus map. Hallways and walls marked.</li>
+    <li><b>v0.2</b>: Rooms traced from the official floor plans for East levels 1–2 and the Link.</li>
+    <li><b>v0.1</b>: First try: just the outside of the campus (buildings, parking lots, fields).</li>
+  </ul>
+
+  <hr>
+
+  <h2>Code</h2>
+  <p>The whole project is on GitHub: <a href="https://github.com/banxxrr/SHS-Atlas">github.com/banxxrr/SHS-Atlas</a></p>
+
+  <footer class="small">
+    <p>SHS Atlas is not an official Stevenson High School or District 125 website. Room info comes from the district's 2023–24 campus map and floor plans and might have mistakes. Found one? Tap the room on the map and choose Edit label.</p>
+  </footer>
+</div>
+</body>
+</html>

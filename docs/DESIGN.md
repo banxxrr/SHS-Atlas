@@ -231,3 +231,7 @@ Pills (999px) for search, buttons, chips and the route pill; circles for map con
 - Don't add a sidebar layout, eyebrow labels, gradient text, glass effects or decorative color.
 - Don't use the district's logo or wordmark; the school colors are fine, the official marks are not.
 - Don't print estimated positions without the amber "estimated" chip.
+
+## Beta front page (site/index.html)
+
+The beta landing page is deliberately outside this system, by request: a bare-bones, amateur, early-web page (white or near-black page, Verdana body, Comic Sans headings in Patriot green, blue underlined links, a dashed yellow heads-up box, a tilted yellow BETA sticker, a chunky green Continue button). It has no map chrome, cards or shadows beyond the button. Detector findings for colors, fonts and sizes outside this file's tokens are expected there; it is replaced when SHS Atlas leaves beta.

@@ -1,4 +1,4 @@
-"""Build site/index.html from src/. Run: python3 build.py"""
+"""Build the site from src/: site/index.html (beta front page) and site/map.html (the map). Run: python3 build.py"""
 import os
 D=os.path.dirname(os.path.abspath(__file__)); S=lambda f: open(os.path.join(D,'src',f),encoding='utf-8').read()
 js=S('main.js')
@@ -21,5 +21,6 @@ assert shell.count('<div class="app"')==1
 shell=shell.replace('<div class="app"','</head>\n<body>\n<div class="app"')
 html=head+shell+js+'\n</script>\n</body>\n</html>\n'
 os.makedirs(os.path.join(D,'site'),exist_ok=True)
-open(os.path.join(D,'site','index.html'),'w',encoding='utf-8').write(html)
-print('site/index.html',len(html)//1024,'KB')
+open(os.path.join(D,'site','map.html'),'w',encoding='utf-8').write(html)
+open(os.path.join(D,'site','index.html'),'w',encoding='utf-8').write(S('home.html'))
+print('site/map.html',len(html)//1024,'KB; site/index.html (beta front page)')

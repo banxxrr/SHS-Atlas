@@ -280,7 +280,7 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
     <button class="roundbtn" id="resetView" title="Show whole campus" aria-label="Show whole campus"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
 
-  <div class="ov hint" id="hint"><span class="hm">Drag to move · Right-drag to turn · Scroll to zoom</span><span class="ht">One finger to move · Two fingers to turn and zoom</span></div>
+  <div class="ov hint" id="hint"><span class="hm">Drag to move · Right-drag to turn · Scroll to zoom</span><span class="ht">One finger moves · Two fingers zoom and turn · Three fingers tilt</span></div>
 
   <section class="sheet" id="sheet" data-state="peek" aria-label="Search and directions">
     <button class="grab" id="grab" type="button" aria-label="Expand panel"></button>
@@ -750,7 +750,8 @@ controls.addEventListener('change',inval);
 ['pointerdown','pointermove','pointerup','wheel','touchstart','touchmove','touchend'].forEach(ev=>stage.addEventListener(ev,inval,{passive:true,capture:true}));
 /* ---- map-app touch gestures (replace OrbitControls' touch handling) ----
    one finger: drag the map (the spot under your finger stays under it), flick to glide
-   two fingers: pinch to zoom, twist to turn, move to drag; slide both up/down together to tilt
+   two fingers: pinch to zoom, twist to turn, move to drag
+   three fingers: slide up/down to tilt the view, left/right to turn it
    double-tap: zoom in there */
 { const el=renderer.domElement, ray=new THREE.Raycaster(), ndc=new THREE.Vector2(), plane=new THREE.Plane(new THREE.Vector3(0,1,0),0), tmpV=new THREE.Vector3(), Y=new THREE.Vector3(0,1,0);
   const T=new Map(); let g=null, glide=null, lastTap=null;
@@ -763,7 +764,8 @@ controls.addEventListener('change',inval);
   const two=()=>{ const [a,b]=[...T.values()]; return {mx:(a.x+b.x)/2,my:(a.y+b.y)/2,d:Math.hypot(b.x-a.x,b.y-a.y),ang:Math.atan2(b.y-a.y,b.x-a.x)}; };
   const begin=()=>{ glide=null;
     if(T.size===1){ const t=[...T.values()][0]; g={n:1,anchor:ground(t.x,t.y),x:t.x,y:t.y,t:performance.now(),vx:0,vz:0}; }
-    else if(T.size>=2){ const m=two(); g={n:2,anchor:ground(m.mx,m.my),m0:m,prev:m,mode:null}; } else g=null; };
+    else if(T.size===2){ const m=two(); g={n:2,anchor:ground(m.mx,m.my),m0:m,prev:m,mode:'map'}; }
+    else if(T.size>=3){ const v=[...T.values()]; g={n:3,prev:{x:v.reduce((a,t)=>a+t.x,0)/v.length,y:v.reduce((a,t)=>a+t.y,0)/v.length}}; } else g=null; };
   const opt={passive:false,capture:true};
   stage.addEventListener('touchstart',e=>{ if(e.target!==el) return; e.stopPropagation(); e.preventDefault(); anim=null;
     for(const t of e.changedTouches) T.set(t.identifier,{x:t.clientX,y:t.clientY,x0:t.clientX,y0:t.clientY,t0:performance.now()}); begin(); inval(); },opt);
@@ -772,13 +774,12 @@ controls.addEventListener('change',inval);
     if(g.n===1&&T.size===1){ const t=[...T.values()][0], p=ground(t.x,t.y);
       if(g.anchor&&p){ const dx=g.anchor.x-p.x, dz=g.anchor.z-p.z, now=performance.now(), dt=Math.max(8,now-g.t); shift(dx,dz);
         g.vx=.6*g.vx+.4*dx/dt; g.vz=.6*g.vz+.4*dz/dt; g.t=now; } }
+    else if(g.n===3&&T.size>=3){ const v=[...T.values()], c={x:v.reduce((a,t)=>a+t.x,0)/v.length,y:v.reduce((a,t)=>a+t.y,0)/v.length};
+      const dx=c.x-g.prev.x, dy=c.y-g.prev.y, off=tmpV.copy(camera.position).sub(controls.target), sph=new THREE.Spherical().setFromVector3(off);
+      sph.phi=Math.max(.02,Math.min(controls.maxPolarAngle,sph.phi-dy*.006)); sph.theta-=dx*.006; off.setFromSpherical(sph); camera.position.copy(controls.target).add(off);
+      g.prev=c; }
     else if(g.n===2&&T.size>=2){ const m=two();
-      if(!g.mode){ const dy=m.my-g.m0.my, dxm=m.mx-g.m0.mx, dd=Math.abs(m.d-g.m0.d), da=Math.abs(m.ang-g.m0.ang);
-        if(Math.hypot(dy,dxm)+dd+da*m.d/2>10){ const [a,b]=[...T.values()], same=Math.sign(a.y-a.y0)===Math.sign(b.y-b.y0);
-          g.mode=(same&&Math.abs(dy)>Math.abs(dxm)*1.6&&dd<24&&da<.2)?'tilt':'map'; } }
-      if(g.mode==='tilt'){ const dy=m.my-g.prev.my, off=tmpV.copy(camera.position).sub(controls.target), sph=new THREE.Spherical().setFromVector3(off);
-        sph.phi=Math.max(.02,Math.min(controls.maxPolarAngle,sph.phi-dy*.006)); off.setFromSpherical(sph); camera.position.copy(controls.target).add(off); }
-      else if(g.mode==='map'&&g.anchor){ let da=m.ang-g.prev.ang; if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
+      if(g.anchor){ let da=m.ang-g.prev.ang; if(da>Math.PI) da-=2*Math.PI; if(da<-Math.PI) da+=2*Math.PI;
         rotY(g.anchor,da); zoomAt(g.anchor,g.prev.d/Math.max(1,m.d)); const p=ground(m.mx,m.my); if(p) shift(g.anchor.x-p.x,g.anchor.z-p.z); }
       g.prev=m; }
     camera.lookAt(controls.target); inval(); },opt);

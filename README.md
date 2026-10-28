@@ -1,6 +1,6 @@
 # SHS Atlas
 
-A student-made 3D map of Adlai E. Stevenson High School (Lincolnshire, IL): every building and level, every numbered room, hallways and walls, and walking directions between any two rooms. Unofficial — not a Stevenson or District 125 site.
+A student-made 3D map of Adlai E. Stevenson High School, replacement for the broken SHSmaps (Lincolnshire, IL): every building and level, every numbered room, hallways and walls, and walking directions between any two rooms. Unofficial — not a Stevenson or District 125 site.
 
 ## Layout
 - `site/` — the published website: `index.html` (beta front page, from `src/home.html`) and `map.html` (the map). Both are generated; don't edit them by hand

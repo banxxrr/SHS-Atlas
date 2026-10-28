@@ -1,6 +1,6 @@
 {
-  // Cloudflare Workers static site: serve the built page in site/
-  "name": "shs-atlas",
+  // Cloudflare Pages: publish the built page in site/
+  "name": "shsatlas",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./site" }
+  "pages_build_output_dir": "./site"
 }

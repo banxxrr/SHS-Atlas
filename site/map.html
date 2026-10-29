@@ -1111,12 +1111,17 @@ function makeSprite(lines,opts={}){
   return sp; }
 function disposeSprite(s){ scene.remove(s); if(s.material.map) s.material.map.dispose(); s.material.dispose(); }
 function centerOf(r){ return [(r.x0+r.x1)/2,(r.z0+r.z1)/2]; }
+const MINOR=/^(|room|rm|office|offices|ss office|.*\bstorage\b.*|electrical|cogen electrical|custodial|maintenance|mech\.?|mech\.? ?(room|rm)|mechanical( rm| room)?|chiller.*|boiler.*|idf|mdf|panel ?boards|receiving|grounds|cooler|pantry|food prep|wash station|drying area|vestibule|copy room|mail room|chem\.? prep.*|equipment|equipment mgr\.? office|break room|staff lounge|director's office|psych|speech|changing rm|dressing rm|showers?|.*shower room|ada room|conference( rm)?|small group|kitchen|staff room|pool (filter|equipment) room)$/i, KEEP_OFFICE=/main|dean|counsel|nurse|attendance|student services|registrar|athletic|activities|principal|financial|security|testing/i;
 function roomLabel(r){
   if(r.label){ disposeSprite(r.label); r.label=null; }
   if(!r.conf && !edits[r.id]) return;
   const d=disp(r), lines=[];
-  if(d.num) lines.push({text:d.num,font:`700 28px ${C.mono}`,size:28,color:C.fg});
-  lines.push({text:d.name,font:`600 ${d.num?18:24}px ${d.num?C.body:C.display}`,size:d.num?18:24,color:d.num?C.muted:C.fg});
+  // back-of-house spaces most visitors never go into get just a small number tag (the card still has the full name)
+  const nm=d.name.trim(), minor=!r.major&&!r.psrc&&!edits[r.id]&&(MINOR.test(nm)||(/office$/i.test(nm)&&!KEEP_OFFICE.test(nm)));
+  if(minor&&!d.num) return;
+  if(minor) lines.push({text:d.num,font:`700 20px ${C.mono}`,size:20,color:C.muted});
+  else { if(d.num) lines.push({text:d.num,font:`700 28px ${C.mono}`,size:28,color:C.fg});
+    lines.push({text:d.name,font:`600 ${d.num?18:24}px ${d.num?C.body:C.display}`,size:d.num?18:24,color:d.num?C.muted:C.fg}); }
   const sp=makeSprite(lines,{sel:selected===r});
   const roomW=Math.max(r.x1-r.x0,r.z1-r.z0), base=r.major?.1:.05;
   const k=Math.max(.03,Math.min(base,(Math.max(roomW,9)*1.1)/sp.userData.px.w));

@@ -253,7 +253,10 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
   .brand{left:392px;bottom:16px}
   .brand .brandlogo{width:36px;height:43px}
   .brand h1{font-size:25px}
-  .chips{margin:0 -16px;padding:2px 16px 4px}
+  /* all quick buttons visible: compact chips that wrap instead of a hidden sideways scroll */
+  .chips{flex-wrap:wrap;overflow:visible;gap:6px;margin:0;padding:2px 0 4px}
+  .chipbtn{height:32px;padding:0 11px;font-size:13px;gap:5px}
+  .chipbtn .dot{width:8px;height:8px}
   .list{margin:0 -16px}.row{padding-inline:16px}
   .badge{top:16px;left:392px}
   .mapctl{top:16px;right:16px}

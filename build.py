@@ -2,7 +2,7 @@
 import os
 D=os.path.dirname(os.path.abspath(__file__)); S=lambda f: open(os.path.join(D,'src',f),encoding='utf-8').read()
 js=S('main.js')
-for tag,f in [('/*PUB*/','pub.js'),('/*PLAN*/','plan.js'),('/*DOORS*/','doors.js'),('/*HALLS*/','halllabels.js'),('/*VLINKS*/','vlinks.js'),('/*NAV*/','nav.js'),('/*NAVUI*/','navui.js')]:
+for tag,f in [('/*PUB*/','pub.js'),('/*PLAN*/','plan.js'),('/*DOORS*/','doors.js'),('/*HALLS2*/','halls2.js'),('/*HALLS*/','halllabels.js'),('/*VLINKS*/','vlinks.js'),('/*NAV*/','nav.js'),('/*NAVUI*/','navui.js')]:
     assert tag in js, tag; js=js.replace(tag,S(f))
 k=js.rindex('})();'); js=js[:k]+S('glue.js')+'\n'+js[k:]
 head='''<!doctype html>

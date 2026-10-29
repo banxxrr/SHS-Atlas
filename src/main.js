@@ -80,6 +80,7 @@ const E_COURT=[[91,-89.5],[90.5,-85.5],[93.5,-85.5],[93,-63.5],[90,-63.5],[90,-6
 /* ================= INTERIOR — traced from the official Stevenson floor plans (SHSMaps, via its creators' demo video) ================= */
 /*PLAN*/
 /*DOORS*/
+/*HALLS2*/
 /*HALLS*/
 /*VLINKS*/
 const unpack=a=>{ const o=[]; for(let i=0;i<a.length;i+=2) o.push([a[i],a[i+1]]); return o; };
@@ -130,7 +131,7 @@ for(const [floor,map,num,name,box,flat] of PLAN_R){
   const r=add(Object.assign({bld:bldOf(map,num),floor,num,name:name||'Room',type:typeOf(num,name),shape,conf:true,src:map==='E3'?'pdf3':'plan',psrc:p?p.src:null,note:map==='E3'?note.replace(PLAN_NOTE,'Number, name and outline traced from the district\'s 2023–24 campus map.'):note,plan:map},bb,sp));
   if(num) (byNum[num]=byNum[num]||[]).push(r);
 }
-for(const [floor,map,flat,holes] of PLAN_H){ const shape=unpack(flat); add(Object.assign({kind:'hall',bld:'Site',floor,type:'link',name:'',shape,holes:holes.map(unpack)},bboxOf(shape))); }
+for(const [floor,map,flat,holes] of PLAN_H2){ const shape=unpack(flat); add(Object.assign({kind:'hall',bld:'Site',floor,type:'link',name:'',shape,holes:holes.map(unpack)},bboxOf(shape))); }
 const roomBy=(num,name)=>(byNum[num]||[]).find(r=>!name||r.name===name)||null;
 
 /* Level 3 (8xxx and the PWC mezzanine) is traced from the district's 2023–24 campus map PDF. Door photos a student took in Oct 2026 add detail. */
@@ -451,6 +452,7 @@ function segGeo(list,H=WALL_H){ // merged boxes, one per wall segment
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g; }
 const WALLSEG={};
 { const add_=(f,gl,s)=>{ const k=f+(gl?'g':''); (WALLSEG[k]=WALLSEG[k]||[]).push(s); };
+  for(const [f,x1,z1,x2,z2,t] of WALL_FILL) add_(f,0,[x1,z1,x2,z2,t]); // windows in outside walls drawn as wall
   const CUT={}; for(const [i,a,b] of DOOR_CUTS) (CUT[i]=CUT[i]||[]).push([a,b]);
   // also drop wall bits that sit inside a doorway (leftover door-swing lines that showed as black slits through the gold)
   const DR=DOORS.map(([f,x1,z1,x2,z2,t])=>{ const L=Math.hypot(x2-x1,z2-z1)||1; return {f,x1,z1,ux:(x2-x1)/L,uz:(z2-z1)/L,L,d:Math.max(.5,t*2.2)/2+.05}; });
@@ -526,22 +528,26 @@ function makeSprite(lines,opts={}){
 function disposeSprite(s){ scene.remove(s); if(s.material.map) s.material.map.dispose(); s.material.dispose(); }
 function centerOf(r){ return [(r.x0+r.x1)/2,(r.z0+r.z1)/2]; }
 const MINOR=/^(|room|rm|office|offices|ss office|.*\bstorage\b.*|electrical|cogen electrical|custodial|maintenance|mech\.?|mech\.? ?(room|rm)|mechanical( rm| room)?|chiller.*|boiler.*|idf|mdf|panel ?boards|receiving|grounds|cooler|pantry|food prep|wash station|drying area|vestibule|copy room|mail room|chem\.? prep.*|equipment|equipment mgr\.? office|break room|staff lounge|director's office|psych|speech|changing rm|dressing rm|showers?|.*shower room|ada room|conference( rm)?|small group|kitchen|staff room|pool (filter|equipment) room)$/i, KEEP_OFFICE=/main|dean|counsel|nurse|attendance|student services|registrar|athletic|activities|principal|financial|security|testing/i;
+let SUITES=null;
 function roomLabel(r){
+  if(!SUITES){ SUITES=new Set(); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&q.major) SUITES.add(q.num); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&/services|office|suite|center/i.test(q.name||'')) SUITES.add(q.num); }
   if(r.label){ disposeSprite(r.label); r.label=null; }
   if(!r.conf && !edits[r.id]) return;
   const d=disp(r), lines=[];
   // back-of-house spaces most visitors never go into get just a small number tag (the card still has the full name)
-  const nm=d.name.trim(), minor=!r.major&&!r.psrc&&!edits[r.id]&&(MINOR.test(nm)||(/office$/i.test(nm)&&!KEEP_OFFICE.test(nm)));
+  const nm=d.name.trim(), area=(r.x1-r.x0)*(r.z1-r.z0), suite=/^\d{4}[A-Z]$/.test(d.num||'')&&(area<40||SUITES.has((d.num||'').slice(0,4)))&&!KEEP_OFFICE.test(nm)&&!/rr|restroom|stair|elevator|nurse|classroom|class\b|lab\b/i.test(nm);
+  // small lettered rooms inside a suite (6064B, 6064C…) and back-of-house spaces get a small number tag only
+  const minor=!r.major&&!edits[r.id]&&(suite||(!r.psrc&&(MINOR.test(nm)||(/office$/i.test(nm)&&!KEEP_OFFICE.test(nm)))));
   if(minor&&!d.num) return;
   if(minor) lines.push({text:d.num,font:`700 20px ${C.mono}`,size:20,color:C.muted});
   else { if(d.num) lines.push({text:d.num,font:`700 28px ${C.mono}`,size:28,color:C.fg});
     lines.push({text:d.name,font:`600 ${d.num?18:24}px ${d.num?C.body:C.display}`,size:d.num?18:24,color:d.num?C.muted:C.fg}); }
   const sp=makeSprite(lines,{sel:selected===r});
-  const roomW=Math.max(r.x1-r.x0,r.z1-r.z0), base=r.major?.1:.05;
-  const k=Math.max(.03,Math.min(base,(Math.max(roomW,9)*1.1)/sp.userData.px.w));
+  const roomW=Math.max(r.x1-r.x0,r.z1-r.z0), base=r.major?.1:minor?.03:.05;
+  const k=Math.max(minor?.022:.03,Math.min(base,(Math.max(roomW,9)*1.1)/sp.userData.px.w));
   sp.scale.set(sp.userData.px.w*k,sp.userData.px.h*k,1);
   const [cx,cz]=centerOf(r); sp.position.set(cx,r.topY+1.2,cz); scene.add(sp); r.label=sp;
-  r.labDist=55+14*Math.sqrt(Math.max(4,(r.x1-r.x0)*(r.z1-r.z0)));
+  r.labDist=minor? 70 : 55+14*Math.sqrt(Math.max(4,(r.x1-r.x0)*(r.z1-r.z0)));
 }
 const AREA=[['WEST BUILDING',-150,18,150],['SPORTS CENTER',-162,18,-26],['EAST BUILDING',108,22,-74],['FIELD HOUSE',36,22,-168],['PATRIOT WELLNESS CENTER',78,20,-200],['NATATORIUM',37,20,-82],
   ['PERFORMING ARTS CENTER',37,26,-8],['EAST COMMONS',94,14,-14],['GLASS COMMONS',-7,14,-32],['2019 ADDITION',168,24,-75],['STADIUM',-64,8,-110],['BASEBALL / SOFTBALL',-90,8,-400],['SOCCER',104,8,-362],

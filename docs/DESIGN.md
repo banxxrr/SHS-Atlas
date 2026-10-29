@@ -46,6 +46,14 @@ colors:
   dark-poi-library: "#33573a"
   swatch-edge: "rgba(0,0,0,0.15)"
 typography:
+  fun-wordmark:
+    fontFamily: "Comic Sans MS, Comic Sans, Comic Neue, Chalkboard SE, cursive"
+    fontSize: "21px"
+    fontWeight: 700
+  fun-wordmark-desktop:
+    fontFamily: "Comic Sans MS, Comic Sans, Comic Neue, Chalkboard SE, cursive"
+    fontSize: "25px"
+    fontWeight: 700
   fun-title:
     fontFamily: "Comic Sans MS, Comic Sans, Comic Neue, Chalkboard SE, cursive"
     fontSize: "38px"
@@ -199,6 +207,8 @@ The playful layer is Comic Sans (Comic Neue from Google Fonts where Comic Sans i
 The system UI font (SF on Apple devices, Segoe on Windows, Roboto on Android and Chromebooks), with no webfont, so the app feels native and loads instantly. Room numbers are the display style: 30px, heavy, tabular figures. Section titles in the sheet are 17px bold. Body text is 15px; metadata is 13px muted. Search input is 16px so iOS doesn't zoom.
 
 ## Layout
+
+- **Brand:** the Patriots logo and "SHS Atlas" sit on the map itself as a wordmark in the bottom-left corner (just above the sheet on phones, right of the panel on desktop), like a maps app's logo. The search bar carries a plain search icon.
 
 - **Phone (below 900px):** the map is edge to edge. The search pill sits at the top inside the safe area; the level badge sits under it on the left; the floor picker, compass and reset sit on the right. A bottom sheet has three resting points: peek (quick chips plus the From/To fields), half, and full. A place card replaces the sheet while open. The sheet goes to peek when a route is shown, so the route stays in view.
 - **Desktop (900px and up):** the sheet becomes a 380px floating panel on the left, with the search pill above it; the place card floats beside it.

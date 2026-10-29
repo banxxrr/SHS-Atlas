@@ -79,6 +79,7 @@ const E_COURT=[[91,-89.5],[90.5,-85.5],[93.5,-85.5],[93,-63.5],[90,-63.5],[90,-6
 
 /* ================= INTERIOR — traced from the official Stevenson floor plans (SHSMaps, via its creators' demo video) ================= */
 /*PLAN*/
+/*DOORS*/
 /*HALLS*/
 /*VLINKS*/
 const unpack=a=>{ const o=[]; for(let i=0;i<a.length;i+=2) o.push([a[i],a[i+1]]); return o; };
@@ -440,11 +441,11 @@ for(const [x,z] of [[98,-80],[110,-70],[118,-82],[102,-66],[-135,134],[-161,160]
 
 /* ---- walls: straight segments vectorized from the blue wall lines on the official plans (door gaps kept); glass where the plan shows a window ---- */
 const WALL_H=3.8, wallMeshes=[];
-function segGeo(list){ // merged boxes, one per wall segment
+function segGeo(list,H=WALL_H){ // merged boxes, one per wall segment
   const pos=[], idx=[]; let v=0;
   for(const [x1,z1,x2,z2,t] of list){ const L=Math.hypot(x2-x1,z2-z1); if(L<.05) continue; const nx=-(z2-z1)/L*t/2, nz=(x2-x1)/L*t/2;
     const c=[[x1+nx,z1+nz],[x2+nx,z2+nz],[x2-nx,z2-nz],[x1-nx,z1-nz]];
-    for(const y of [0,WALL_H]) for(const [x,z] of c) pos.push(x,y,z);
+    for(const y of [0,H]) for(const [x,z] of c) pos.push(x,y,z);
     const q=[[0,1,2,0,2,3],[4,6,5,4,7,6],[0,4,5,0,5,1],[1,5,6,1,6,2],[2,6,7,2,7,3],[3,7,4,3,4,0]];
     for(const f of q) for(const k of f) idx.push(v+k); v+=8; }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g; }
@@ -456,6 +457,11 @@ const WALLSEG={};
   for(const k in WALLSEG){ const gl=k.endsWith('g'), f=parseInt(k,10);
     const m=new THREE.Mesh(segGeo(WALLSEG[k]), gl? new THREE.MeshLambertMaterial({color:0x7fb8d8,transparent:true,opacity:.35,depthWrite:false}) : new THREE.MeshBasicMaterial({color:0x333333,transparent:true}));
     m.position.y=(f-1)*FH+PLATE; m.userData.floor=f; m.userData.glass=gl; scene.add(m); wallMeshes.push(m); } }
+/* ---- doorways: a gold threshold across each gap in the walls, so doors read as doors, not holes ---- */
+const doorMeshes=[];
+{ const byF={}; for(const [f,x1,z1,x2,z2,t] of DOORS) (byF[f]=byF[f]||[]).push([x1,z1,x2,z2,Math.max(.6,t*2.5)]);
+  for(const f in byF){ const m=new THREE.Mesh(segGeo(byF[f],1.1),new THREE.MeshBasicMaterial({color:0xe8c703}));
+    m.position.y=(f-1)*FH+PLATE+.02; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } }
 
 /* ---- interior room meshes ---- */
 const meshes=[];
@@ -540,6 +546,7 @@ function readTheme(){ inval();
     r.mesh.material.color.set(v(tok)); if(r.edges) r.edges.material.color.set(r.conf?C.edge:v('--line')); }
   for(const s of shells) s.outline.material.color.set(C.edge);
   for(const w of wallMeshes) if(!w.userData.glass) w.material.color.set(v('--wall'));
+  for(const d of doorMeshes) d.material.color.set(v('--door'));
 }
 function rebuildLabels(){ for(const r of pick) roomLabel(r); areaLabels(); applyMode(); }
 
@@ -561,6 +568,7 @@ function applyMode(){ inval();
   for(const d of details){ d.mesh.visible=!out && d.p.active; }
   areaSprites.forEach(s=>s.visible=out);
   hallSprites.forEach(s=>s.visible=!out && s.userData.floor===+mode);
+  for(const d of doorMeshes) d.visible=!out && d.userData.floor===+mode;
   for(const w of wallMeshes){ const f=w.userData.floor; w.visible=!out && f<=+mode; const cur=f===+mode;
     if(w.userData.glass){ w.material.opacity=cur?.35:.04; continue; }
     w.material.opacity=cur?1:.06; w.material.depthWrite=cur; }
@@ -614,6 +622,7 @@ function renderList(){
 q.addEventListener('input',renderList);
 const lg=document.getElementById('legend');
 { const s=document.createElement('span'); s.innerHTML='<i class="sw" style="background:var(--hall)"></i>'; s.appendChild(document.createTextNode('Hallway')); lg.appendChild(s); }
+{ const s=document.createElement('span'); s.innerHTML='<i class="sw" style="background:var(--door)"></i>'; s.appendChild(document.createTextNode('Doorway')); lg.appendChild(s); }
 for(const [k,t] of Object.entries(TYPES)){ if(k==='link'||k==='bldg') continue; const s=document.createElement('span'); s.innerHTML=`<i class="sw" style="background:var(${t.tok})"></i>`; s.appendChild(document.createTextNode(t.label)); lg.appendChild(s); }
 document.getElementById('stConf').textContent=pick.filter(r=>(r.src==='plan'||/^poster/.test(r.src))&&r.num&&!r.est3).length;
 document.getElementById('stEst').textContent=pick.filter(r=>r.est3).length;

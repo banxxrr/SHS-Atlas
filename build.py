@@ -15,7 +15,6 @@ head='''<!doctype html>
 <meta property="og:description" content="Find any room at Stevenson High School and get walking directions.">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<script>try{if(localStorage.getItem('shs-beta-ok')!=='1')location.replace('./'+location.hash)}catch(e){}</script>
 '''
 shell=S('shell.html')
 assert shell.count('<div class="app"')==1

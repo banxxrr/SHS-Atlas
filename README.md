@@ -7,6 +7,7 @@ A student-made 3D map of Adlai E. Stevenson High School, replacement for the bro
 - `src/` — the page shell (`shell.html`), app code (`main.js`, `nav.js`, `navui.js`, `glue.js`) and data (`plan.js` rooms/halls/walls, `pub.js` room facts, `halllabels.js`, `vlinks.js` stairs/elevators)
 - `tools/trace/` — the scripts used to trace rooms and walls from the floor plans
 - `docs/` — product and design notes (`PRODUCT.md`, `DESIGN.md`)
+- `functions/_middleware.js` — beta password lock, checked on Cloudflare's servers (password in the `BETA_PASSWORD` variable)
 
 ## Build
 ```

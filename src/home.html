@@ -11,11 +11,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap">
 <script>
-  // beta password gate (a speed bump for the beta, not real security: the real sign-in comes later)
-  var OK = false; try { OK = localStorage.getItem('shs-beta-ok') === '1'; } catch (e) {}
-  // old shared links (#room=… / #from=…&to=…) still open the map once unlocked
-  if (OK && /(^|[#&])(room|from|to)=/.test(location.hash)) location.replace('map.html' + location.hash);
-  document.documentElement.className = OK ? 'unlocked' : 'locked';
+  // old shared links (#room=… / #from=…&to=…) still open the map
+  if (/(^|[#&])(room|from|to)=/.test(location.hash)) location.replace('map.html' + location.hash);
 </script>
 <style>
   :root {
@@ -55,14 +52,6 @@
   .now { font-family: var(--fun); font-size: 13px; font-weight: 700; background: var(--green); color: var(--go-ink); padding: 0 6px; margin-left: 4px; }
   .small { font-size: 13px; color: var(--muted); }
   footer { margin-top: 30px; }
-  .locked .page > :not(header):not(.lock) { display: none; }
-  .unlocked .lock { display: none; }
-  .lock { margin: 22px 0; padding: 14px; border: 1px solid var(--line); }
-  .lock label { display: block; font-family: var(--fun); font-weight: 700; font-size: 19px; margin-bottom: 8px; }
-  .lock input { font: 22px Verdana, sans-serif; width: 8em; padding: 6px 8px; border: 2px solid var(--line); background: var(--bg); color: var(--fg); letter-spacing: .2em; }
-  .lock button { font-family: var(--fun); font-weight: 700; font-size: 18px; padding: 7px 16px; margin-left: 6px; color: var(--go-ink); background: var(--green); border: 2px solid var(--go-edge); border-radius: 6px; cursor: pointer; }
-  .lock .err { color: #d01c1c; font-weight: 700; margin: 8px 0 0; min-height: 1.4em; }
-  @media (prefers-color-scheme: dark) { .lock .err { color: #ff7a7a; } }
   @media (prefers-reduced-motion: reduce) { .go:active { transform: none; } }
 </style>
 </head>
@@ -72,14 +61,6 @@
     <img src="logo.png" alt="Stevenson Patriots logo">
     <h1>SHS Atlas <span class="beta">BETA</span></h1>
   </header>
-
-  <form class="lock" id="lock" autocomplete="off">
-    <label for="pw">Beta password</label>
-    <input id="pw" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autofocus>
-    <button type="submit">Unlock</button>
-    <p class="err" id="err" aria-live="polite"></p>
-  </form>
-
 
   <p>A 3D map of Stevenson High School with every room, plus walking directions from any room to any other room. Made by a student, not by the school.</p>
 
@@ -115,17 +96,5 @@
     <p>SHS Atlas is not an official Stevenson High School or District 125 website. Room info comes from the district's 2023–24 campus map and floor plans and might have mistakes. Found one? Tap the room on the map and choose Edit label.</p>
   </footer>
 </div>
-<script>
-document.getElementById('lock').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  var v = document.getElementById('pw').value.trim(), err = document.getElementById('err');
-  var h = '';
-  try { var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('shs-atlas:' + v)); h = Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join(''); } catch (x) { err.textContent = 'This browser can\'t check the password. Try Safari or Chrome.'; return; }
-  if (h !== '1a156e1d7914fd17a78f4397958299d63b79641fe6dc1c02f70ac046ee445059') { err.textContent = 'Wrong password. Ask whoever sent you the link.'; document.getElementById('pw').select(); return; }
-  try { localStorage.setItem('shs-beta-ok', '1'); } catch (x) {}
-  if (/(^|[#&])(room|from|to)=/.test(location.hash)) { location.replace('map.html' + location.hash); return; }
-  document.documentElement.className = 'unlocked';
-});
-</script>
 </body>
 </html>

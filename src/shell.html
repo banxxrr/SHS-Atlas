@@ -233,21 +233,24 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brandlogo{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)!important}}
 :root[data-theme="dark"] .brandlogo{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)!important}
 @media (min-width:900px){
-  .topbar{top:16px;left:16px;right:auto;width:380px}
-  .sheet{top:78px;left:16px;bottom:16px;right:auto;width:380px;height:auto;border-radius:var(--r-lg);transform:none!important;transition:none}
+  .topbar{top:16px;left:16px;right:auto;width:360px}
+  /* the panel hugs its content and only grows when there are results or steps to show */
+  .sheet{top:76px;left:16px;bottom:auto;right:auto;width:360px;height:auto;max-height:calc(100% - 92px);border-radius:var(--r-lg);transform:none!important;transition:none}
   .grab{display:none}
-  .sheet-body{padding:16px 18px 24px}
-  .brand{left:412px;bottom:16px}
+  .sheet-body{flex:0 1 auto;padding:12px 16px 16px}
+  .sec{padding-top:12px;margin-top:12px}
+  .sec h2{font-size:17px;margin-bottom:8px}
+  .brand{left:392px;bottom:16px}
   .brand .brandlogo{width:36px;height:43px}
   .brand h1{font-size:25px}
-  .chips{flex-wrap:wrap;overflow:visible;margin:0;padding:0 0 4px}
-  .list{margin:0 -18px}.row{padding-inline:18px}
-  .badge{top:16px;left:412px}
+  .chips{margin:0 -16px;padding:2px 16px 4px}
+  .list{margin:0 -16px}.row{padding-inline:16px}
+  .badge{top:16px;left:392px}
   .mapctl{top:16px;right:16px}
-  .eta{top:68px;left:412px}
+  .eta{top:68px;left:392px}
   .hint{bottom:16px;left:auto;right:16px;transform:none}
   .info{left:auto;right:76px;top:16px;bottom:16px;width:380px;max-height:none}
-  .card{left:412px;right:auto;bottom:16px;width:380px;max-height:calc(100% - 100px)}
+  .card{left:392px;right:auto;bottom:16px;width:380px;max-height:calc(100% - 100px)}
   .app.card-open .sheet{transform:none}
 }
 </style>

@@ -729,6 +729,24 @@ function select(r,fly){
   if(prev&&prev!==r&&!prev.ext) roomLabel(prev);
   if(r&&!r.ext) roomLabel(r);
   applyMode(); if(r&&fly) flyTo(r); renderCard(); if(r&&!r.ext&&disp(r).num) setHash('room='+encodeURIComponent(disp(r).num)); }
+/* ---- card text for regular visitors: no source tags, no tracing notes; only descriptions that help ---- */
+const DEV=()=>!!window.__atlasDevOpen;
+const SOURCEY=/OpenStreetMap|Street View|satellite|\(floor plan\)|floor plan room|traced|outline|estimated home|video frame|door photo|confirms it|Source:|Club\/office info:|Listed in the 2019 catalog/i;
+const DESC=[[/^nurse$|health office/i,'Health office: go here if you feel sick or get hurt.'],[/^main office$/i,"The school's front office."],
+  [/attendance/i,'Report absences, late arrivals and early pickups here.'],[/^student services$/i,'Counselors, deans and social workers.'],
+  [/servery/i,'Cafeteria food lines.'],[/commons/i,'Cafeteria seating for lunch.'],[/learning center|\bilc\b/i,'Library and study space.'],
+  [/testing/i,'Make-up tests and other assessments are taken here.'],[/field house/i,'Indoor courts and track for PE and athletics.'],
+  [/aquatic|natatorium/i,'The pool. During the school day, go in through the locker rooms; the deck entrance opens after 3:30 PM.'],
+  [/locker room/i,'Changing area for PE.'],[/auditorium|performing arts center|recital hall|little theat|black box/i,'Performance space for concerts and shows.'],
+  [/college & career/i,'Help with college and career planning.'],[/fitness|weight room|cardio/i,'Workout space.'],[/book ?store/i,'School store.']];
+function usefulDesc(r,raw){ const nm=(disp(r).name||'').trim();
+  let t=(raw||'').replace(PLAN_NOTE,'').replace(SMALL_NOTE,'');
+  t=t.replace(/A student's door photo \([^)]*\) confirms it:\s*/g,'');
+  // drop "Known as: <its own name>."
+  t=t.replace(/Known as: ([^.]+)\.\s*/,(m,k)=>k.trim().toLowerCase()===nm.toLowerCase()?'':`Also called ${k.trim()}. `);
+  t=t.split(/(?<=[.!?])\s+/).filter(x=>x.trim()&&!SOURCEY.test(x)).join(' ').trim();
+  if(!t){ const hit=DESC.find(([re])=>re.test(nm)); if(hit) t=hit[1]; }
+  return t; }
 function renderCard(){
   const r=selected; if(!r){ card.hidden=true; return; }
   card.hidden=false; const d=disp(r);
@@ -736,7 +754,8 @@ function renderCard(){
     card.innerHTML=`<div class="top"><div><div class="nm"></div></div><button class="x" aria-label="Close"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="meta"></div><span class="chip ok">Outline from OpenStreetMap · look from satellite & Street View</span><div class="desc"></div>
       <div class="acts"><button class="ghostbtn" id="goIn">See inside</button>${s?`<a class="ghostbtn" style="text-decoration:none" target="_blank" rel="noopener" href="${s[1]}">Open source</a>`:''}</div>`;
     card.querySelector('.nm').textContent=r.name; card.querySelector('.meta').textContent=BLD[r.bld]||'Campus';
-    card.querySelector('.desc').textContent=r.note+(s?` Source: ${s[0]}.`:'');
+    card.querySelector('.desc').textContent=DEV()? r.note+(s?` Source: ${s[0]}.`:'') : usefulDesc(r,r.note);
+    if(!DEV()){ const c=card.querySelector('.chip'); if(c) c.remove(); const a=card.querySelector('a.ghostbtn'); if(a) a.remove(); }
     card.querySelector('.x').onclick=()=>select(null); card.querySelector('#goIn').onclick=()=>{ selected=null; setMode('1'); renderCard(); };
     return; }
   const lvl=r.ground?'Outdoors':(r.span>1?`Levels ${r.floor}–${top(r)}`:`Level ${r.floor}`);
@@ -752,22 +771,23 @@ function renderCard(){
     if(p) desc+=` Club/office info: ${p[0]}.`; if(s&&r.src!=='plan') desc+=(desc?' ':'')+`Source: ${s[0]}.`; }
   else if(r.cut){ chip='<span class="chip">Position estimated</span>'; desc=`The plan images end just short of the West Building's south wall, so the rooms along it aren't shown. Rooms numbered ${r.range} (such as ${r.floor===1?'1902–1914':'2900s'}) are likely here.`; }
   else { chip='<span class="chip">Unconfirmed</span>'; desc='Not labeled on the floor plan.'; }
+  if(!DEV()){ chip=''; desc=usefulDesc(r,desc); }
   card.innerHTML=`<div class="top"><div>${shownNum?'<div class="num"></div>':''}<div class="nm"></div></div><button class="x" aria-label="Close"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="meta"></div>${chip}<div class="desc"></div>
     ${editing?`<form class="edit"><label>Room number<input id="edNum" autocomplete="off"></label><label>Room name<input id="edName" autocomplete="off"></label>
       <div class="acts"><button class="primary" type="submit">Save label</button><button class="ghostbtn" type="button" id="edCancel">Cancel</button>${edits[r.id]?'<button class="ghostbtn" type="button" id="edReset">Restore original</button>':''}</div></form>`
-    :`<div class="acts"><button class="ghostbtn" id="edOpen">Edit label</button><button class="ghostbtn" id="zoomTo">Zoom to room</button><button class="ghostbtn" id="dirTo">Directions here</button><button class="ghostbtn" id="dirFrom">From here</button>${r.conf&&SRC[r.src]&&SRC[r.src][1]?`<a class="ghostbtn" style="text-decoration:none" target="_blank" rel="noopener" href="${SRC[r.src][1]}">Open source</a>`:''}</div>`}`;
+    :`<div class="acts"><button class="ghostbtn" id="edOpen">Edit label</button>${DEV()?'<button class="ghostbtn" id="zoomTo">Zoom to room</button>':''}<button class="ghostbtn" id="dirTo">Directions here</button><button class="ghostbtn" id="dirFrom">From here</button>${DEV()&&r.conf&&SRC[r.src]&&SRC[r.src][1]?`<a class="ghostbtn" style="text-decoration:none" target="_blank" rel="noopener" href="${SRC[r.src][1]}">Open source</a>`:''}</div>`}`;
   if(shownNum) card.querySelector('.num').textContent=shownNum;
   card.querySelector('.nm').textContent= r.conf||edits[r.id]? d.name : (estNum?'Estimated location':'Unconfirmed room');
   card.querySelector('.meta').textContent=`${BLD[r.bld]} · ${lvl} · ${TYPES[r.type].label}${edits[r.id]?' · edited by you':''}`;
-  card.querySelector('.desc').textContent=desc;
+  const dsc=card.querySelector('.desc'); dsc.textContent=desc; if(!desc) dsc.remove();
   card.querySelector('.x').onclick=()=>select(null);
   if(editing){ const f=card.querySelector('form'), n=card.querySelector('#edNum'), m=card.querySelector('#edName');
     n.value=d.num||estNum||''; m.value=r.conf?d.name:''; n.focus();
     f.onsubmit=e=>{ e.preventDefault(); edits[r.id]={num:n.value.trim(),name:m.value.trim()||'Room',origNum:r.num||r.range||'',origName:r.conf?r.name:'(unconfirmed)',bld:r.bld,floor:r.floor}; saveEdits(); editing=false; roomLabel(r); applyMode(); renderCard(); };
     card.querySelector('#edCancel').onclick=()=>{ editing=false; renderCard(); };
     const rs=card.querySelector('#edReset'); if(rs) rs.onclick=()=>{ delete edits[r.id]; saveEdits(); editing=false; roomLabel(r); applyMode(); renderCard(); };
-  } else { card.querySelector('#edOpen').onclick=()=>{ editing=true; renderCard(); }; card.querySelector('#zoomTo').onclick=()=>flyTo(r);
+  } else { card.querySelector('#edOpen').onclick=()=>{ editing=true; renderCard(); }; const zt=card.querySelector('#zoomTo'); if(zt) zt.onclick=()=>flyTo(r);
     const tag=disp(r).num?`${disp(r).num} · ${disp(r).name}`:disp(r).name;
     card.querySelector('#dirTo').onclick=()=>{ $('dTo').value=tag; if($('dFrom').value) go(); else $('dFrom').focus(); };
     card.querySelector('#dirFrom').onclick=()=>{ $('dFrom').value=tag; if($('dTo').value) go(); else $('dTo').focus(); }; } }

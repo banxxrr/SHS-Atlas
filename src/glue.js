@@ -76,7 +76,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!info.hidden) open
 new MutationObserver(()=>{ if(!card.hidden) info.hidden=true; }).observe(card,{attributes:true,attributeFilter:['hidden']});
 // ---- dev console: hidden; opens after typing "atlasdev" (keyboard) or tapping the SHS Atlas logo 5 times fast.
 // On the website the console code is only sent after the dev password (checked on Cloudflare's servers).
-window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,disp,inval,findRoom,getMode:()=>mode,
+window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,disp,inval,findRoom,renderCard,getMode:()=>mode,
   layers:()=>({walls:()=>wallMeshes, doors:()=>doorMeshes, 'room blocks':()=>rooms.filter(r=>r.kind==='room'&&r.mesh&&!r.staff).map(r=>r.mesh),
     'staff rooms':()=>rooms.filter(r=>r.staff&&r.mesh).map(r=>r.mesh), hallways:()=>rooms.filter(r=>r.kind==='hall'&&r.mesh).map(r=>r.mesh),
     'room labels':()=>rooms.filter(r=>r.label).map(r=>r.label), 'hall labels':()=>hallSprites, site:()=>siteMeshes.map(s=>s.mesh), stairs:()=>stairMeshes})};

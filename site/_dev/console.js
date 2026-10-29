@@ -27,9 +27,10 @@
   <section><h4>Tools</h4><div class="dvrow"><button id="dvTheme">Toggle theme</button><button id="dvClear">Clear saved data</button><button id="dvLock">Re-lock beta</button><button id="dvReload">Reload</button></div></section>
   </div>`;
   document.body.appendChild(el);
+  window.__atlasDevOpen=true; if(A.renderCard) A.renderCard(); // cards show sources and dev buttons while the console is open
   const $=id=>document.getElementById(id), out=(id,t)=>{ $(id).textContent=t; };
   $('dvBuild').textContent=(document.title||'')+' · '+rooms.length+' objects';
-  $('dvClose').onclick=()=>{ el.remove(); st.remove(); stop=true; window.__atlasDevOpen=false; };
+  $('dvClose').onclick=()=>{ el.remove(); st.remove(); stop=true; window.__atlasDevOpen=false; if(A.renderCard) A.renderCard(); };
   $('dvMin').onclick=()=>el.classList.toggle('min');
   // drag by header
   { let d=null; el.querySelector('header').addEventListener('pointerdown',e=>{ if(e.target.tagName==='BUTTON') return; const b=el.getBoundingClientRect(); d={x:e.clientX-b.left,y:e.clientY-b.top}; e.target.setPointerCapture(e.pointerId); });

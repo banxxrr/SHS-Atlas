@@ -78,7 +78,7 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .badge b{font-weight:700;font-family:var(--f-fun);font-size:14px}
 .badge span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ---------- map controls: floor picker, compass, reset ---------- */
+/* ---------- map controls: floor picker, reset, info ---------- */
 .mapctl{top:calc(max(10px,env(safe-area-inset-top)) + 60px);right:max(10px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:10px;align-items:flex-end}
 .seg{color:var(--fg);display:flex;flex-direction:column;background:var(--panel);border-radius:var(--r-md);box-shadow:var(--shadow);overflow:hidden}
 .seg button{color:var(--fg);width:46px;height:42px;border:0;background:transparent;cursor:pointer;font-weight:700;font-size:17px;font-family:var(--f-fun);display:grid;place-items:center;position:relative;font-variant-numeric:tabular-nums}
@@ -88,7 +88,6 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .seg button[aria-pressed="true"]::before,.seg button[aria-pressed="true"]+button::before{opacity:0}
 .roundbtn{width:46px;height:46px;border-radius:50%;border:0;background:var(--panel);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
 .roundbtn:hover{color:var(--accent)}
-.compass svg{width:30px;height:30px}
 
 .hint{left:50%;transform:translateX(-50%);bottom:calc(var(--peek,208px) + 56px);font-size:12.5px;color:var(--fg);background:var(--panel);border-radius:999px;padding:6px 12px;box-shadow:var(--shadow);white-space:nowrap;transition:opacity .4s var(--ease)}
 .hint.gone{opacity:0;pointer-events:none}
@@ -200,6 +199,14 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .eta .iconbtn{color:var(--gold-ink);width:36px;height:36px}
 .eta .iconbtn:hover{background:rgba(0,0,0,.1);color:var(--gold-ink)}
 
+/* ---------- map info panel ---------- */
+.info{color:var(--fg);z-index:8;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));max-height:78%;overflow:auto;background:var(--panel);border-radius:var(--r-lg);padding:14px 18px 20px;box-shadow:var(--shadow-lg);animation:rise .32s var(--ease)}
+.info .infotop{display:flex;justify-content:space-between;align-items:center;position:sticky;top:-14px;background:var(--panel);padding:4px 0 6px;margin-top:-4px;z-index:1}
+.info .infotop h2{margin:0;font-family:var(--f-fun);font-size:21px;color:var(--accent)}
+.info .x{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--bg);cursor:pointer;color:var(--muted);display:grid;place-items:center}
+.info .sec:first-of-type{border-top:0;margin-top:4px}
+@media (prefers-reduced-motion: reduce){.info{animation:none}}
+
 /* ---------- place card ---------- */
 .card{color:var(--fg);z-index:7;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));max-height:62%;overflow:auto;background:var(--panel);border-radius:var(--r-lg);padding:16px 18px 18px;box-shadow:var(--shadow-lg);animation:rise .32s var(--ease)}
 @keyframes rise{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}}
@@ -239,6 +246,7 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
   .mapctl{top:16px;right:16px}
   .eta{top:68px;left:412px}
   .hint{bottom:16px;left:auto;right:16px;transform:none}
+  .info{left:auto;right:76px;top:16px;bottom:16px;width:380px;max-height:none}
   .card{left:412px;right:auto;bottom:16px;width:380px;max-height:calc(100% - 100px)}
   .app.card-open .sheet{transform:none}
 }
@@ -268,10 +276,9 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
       <button data-mode="3" aria-pressed="false" aria-label="Level 3">3</button>
       <button data-mode="4" aria-pressed="false" aria-label="Level 4">4</button>
     </div>
-    <button class="roundbtn compass" title="North" aria-label="Compass: north">
-      <svg id="needle" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 4 19.5 15 15 13 10.5 15Z" fill="#e5484d"/><path d="M15 26 10.5 15 15 17 19.5 15Z" fill="var(--muted)" opacity=".6"/></svg>
-    </button>
+    <svg id="needle" hidden aria-hidden="true"></svg>
     <button class="roundbtn" id="resetView" title="Show whole campus" aria-label="Show whole campus"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="roundbtn" id="infoBtn" title="Map info" aria-label="Map info"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
   </div>
 
   <div class="brand"><span class="brandlogo" role="img" aria-label="Stevenson Patriots logo"></span><h1>SHS Atlas</h1></div>
@@ -319,42 +326,45 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
         <div class="list" id="list" aria-label="Rooms"></div>
       </div>
 
-      <div class="sec">
-        <h2>Map key</h2>
-        <div class="legend" id="legend"></div>
-      </div>
-
-      <div class="sec key">
-        <h2>Room numbers</h2>
-        <table>
-          <tr><td>1xxx</td><td>West Building, level 1</td></tr>
-          <tr><td>2xxx</td><td>West Building, level 2</td></tr>
-          <tr><td>3xxx</td><td>The Link and Main Office</td></tr>
-          <tr><td>4xxx</td><td>Performing arts, Glass Commons, East Commons</td></tr>
-          <tr><td>5xxx</td><td>Pool and Field House (50xx), Patriot Wellness Center (51xx–53xx)</td></tr>
-          <tr><td>6xxx</td><td>East Building level 1 (61xx: 2019 addition)</td></tr>
-          <tr><td>7xxx</td><td>East Building level 2 (71xx: addition)</td></tr>
-          <tr><td>8xxx</td><td>East Building level 3 (81xx: addition)</td></tr>
-          <tr><td>9xxx</td><td>Level 4: rooftop greenhouse and roof gardens</td></tr>
-        </table>
-        <div class="fine">The hundreds digit is the hallway. Type any four-digit number to find it or the nearest labeled room in that hallway.</div>
-      </div>
-
-      <div class="sec note">
-        <h2>About</h2>
-        <div class="stats"><span><b id="stConf">0</b> rooms from official plans</span><span><b id="stEst">0</b> estimated</span></div>
-        <p>A student-made map, not an official Stevenson or District 125 site. Rooms, hallways and walls are traced from the district's 2023–24 campus map and the official plans shown in the SHSMaps demo, fitted to OpenStreetMap building outlines and checked against students' door photos.</p>
-        <p>Spot a mistake? Tap the room, choose <b>Edit label</b>, then copy your corrections and send them in. Edits save on this device.</p>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="ghostbtn" id="copyEdits" type="button">Copy my corrections</button>
-          <span id="copyMsg" aria-live="polite"></span>
-        </div>
-        <textarea id="copyFallback" hidden readonly></textarea>
-      </div>
     </div>
   </section>
 
   <div class="ov card" id="card" hidden></div>
+
+  <section class="ov info" id="info" hidden aria-label="Map info">
+    <div class="infotop"><h2>Map info</h2><button class="x" id="infoClose" type="button" aria-label="Close"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <div class="sec">
+      <h2>Map key</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="sec key">
+      <h2>Room numbers</h2>
+      <table>
+        <tr><td>1xxx</td><td>West Building, level 1</td></tr>
+        <tr><td>2xxx</td><td>West Building, level 2</td></tr>
+        <tr><td>3xxx</td><td>The Link and Main Office</td></tr>
+        <tr><td>4xxx</td><td>Performing arts, Glass Commons, East Commons</td></tr>
+        <tr><td>5xxx</td><td>Pool and Field House (50xx), Patriot Wellness Center (51xx–53xx)</td></tr>
+        <tr><td>6xxx</td><td>East Building level 1 (61xx: 2019 addition)</td></tr>
+        <tr><td>7xxx</td><td>East Building level 2 (71xx: addition)</td></tr>
+        <tr><td>8xxx</td><td>East Building level 3 (81xx: addition)</td></tr>
+        <tr><td>9xxx</td><td>Level 4: rooftop greenhouse and roof gardens</td></tr>
+      </table>
+    </div>
+
+    <div class="sec note">
+      <h2>About</h2>
+      <div class="stats"><span><b id="stConf">0</b> rooms from official plans</span><b id="stEst" hidden>0</b></div>
+      <p>A student-made map, not an official Stevenson or District 125 site.</p>
+      <p>Spot a mistake? Tap the room, choose <b>Edit label</b>, then copy your corrections and send them in. Edits save on this device.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="ghostbtn" id="copyEdits" type="button">Copy my corrections</button>
+        <span id="copyMsg" aria-live="polite"></span>
+      </div>
+      <textarea id="copyFallback" hidden readonly></textarea>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

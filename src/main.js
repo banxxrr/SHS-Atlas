@@ -668,7 +668,7 @@ q.addEventListener('input',renderList);
 const lg=document.getElementById('legend');
 { const s=document.createElement('span'); s.innerHTML='<i class="sw" style="background:var(--hall)"></i>'; s.appendChild(document.createTextNode('Hallway')); lg.appendChild(s); }
 { const s=document.createElement('span'); s.innerHTML='<i class="sw" style="background:var(--door)"></i>'; s.appendChild(document.createTextNode('Doorway')); lg.appendChild(s); }
-for(const [k,t] of Object.entries(TYPES)){ if(k==='link'||k==='bldg') continue; const s=document.createElement('span'); s.innerHTML=`<i class="sw" style="background:var(${t.tok})"></i>`; s.appendChild(document.createTextNode(t.label)); lg.appendChild(s); }
+for(const [k,t] of Object.entries(TYPES)){ if(k==='link'||k==='bldg'||k==='unk') continue; const s=document.createElement('span'); s.innerHTML=`<i class="sw" style="background:var(${t.tok})"></i>`; s.appendChild(document.createTextNode(t.label)); lg.appendChild(s); }
 document.getElementById('stConf').textContent=pick.filter(r=>(r.src==='plan'||/^poster/.test(r.src))&&r.num&&!r.est3).length;
 document.getElementById('stEst').textContent=pick.filter(r=>r.est3).length;
 

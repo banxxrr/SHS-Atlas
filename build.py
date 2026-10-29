@@ -23,4 +23,6 @@ html=head+shell+js+'\n</script>\n</body>\n</html>\n'
 os.makedirs(os.path.join(D,'site'),exist_ok=True)
 open(os.path.join(D,'site','map.html'),'w',encoding='utf-8').write(html)
 open(os.path.join(D,'site','index.html'),'w',encoding='utf-8').write(S('home.html'))
+os.makedirs(os.path.join(D,'site','_dev'),exist_ok=True)
+open(os.path.join(D,'site','_dev','console.js'),'w',encoding='utf-8').write(S('devconsole.js'))  # served only with the dev cookie (functions/_middleware.js)
 print('site/map.html',len(html)//1024,'KB; site/index.html (beta front page)')

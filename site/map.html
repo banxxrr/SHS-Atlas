@@ -1644,6 +1644,25 @@ const info=$('info'), openInfo=v=>{ info.hidden=!v; if(v){ card.hidden=true; inf
 $('infoBtn').onclick=()=>openInfo(info.hidden); $('infoClose').onclick=()=>openInfo(false);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!info.hidden) openInfo(false); });
 new MutationObserver(()=>{ if(!card.hidden) info.hidden=true; }).observe(card,{attributes:true,attributeFilter:['hidden']});
+// ---- dev console: hidden; opens after typing "atlasdev" (keyboard) or tapping the SHS Atlas logo 5 times fast.
+// On the website the console code is only sent after the dev password (checked on Cloudflare's servers).
+window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,disp,inval,findRoom,getMode:()=>mode,
+  layers:()=>({walls:()=>wallMeshes, doors:()=>doorMeshes, 'room blocks':()=>rooms.filter(r=>r.kind==='room'&&r.mesh&&!r.staff).map(r=>r.mesh),
+    'staff rooms':()=>rooms.filter(r=>r.staff&&r.mesh).map(r=>r.mesh), hallways:()=>rooms.filter(r=>r.kind==='hall'&&r.mesh).map(r=>r.mesh),
+    'room labels':()=>rooms.filter(r=>r.label).map(r=>r.label), 'hall labels':()=>hallSprites, site:()=>siteMeshes.map(s=>s.mesh), stairs:()=>stairMeshes})};
+{ let buf='', taps=[];
+  const openDev=async()=>{ if(document.getElementById('atlasDev')) return;
+    if(typeof __ATLAS_DEV_INLINE==='function'){ __ATLAS_DEV_INLINE(); return; }
+    const load=()=>new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='/_dev/console.js?'+Date.now(); s.onload=ok; s.onerror=no; document.head.appendChild(s); });
+    let r=await fetch('/_dev/console.js',{method:'HEAD',credentials:'same-origin'}).catch(()=>null);
+    if(!r||!r.ok){ const code=prompt('Dev code'); if(!code) return;
+      const fd=new FormData(); fd.set('code',code); r=await fetch('/__dev',{method:'POST',body:fd,credentials:'same-origin'}).catch(()=>null);
+      if(!r||!r.ok){ alert('Nope.'); return; } }
+    load().catch(()=>alert('Dev console failed to load.')); };
+  document.addEventListener('keydown',e=>{ const t=document.activeElement&&document.activeElement.tagName; if(t==='INPUT'||t==='TEXTAREA') return;
+    buf=(buf+e.key.toLowerCase()).slice(-8); if(buf==='atlasdev'){ buf=''; openDev(); } });
+  const brand=document.querySelector('.brand'); if(brand){ brand.style.pointerEvents='auto';
+    brand.addEventListener('click',()=>{ const n=performance.now(); taps=taps.filter(t=>n-t<2500); taps.push(n); if(taps.length>=5){ taps=[]; openDev(); } }); } }
 syncClear(); syncQ(); measurePeek(); viewOffset(); new ResizeObserver(measurePeek).observe(sheet);
 }
 

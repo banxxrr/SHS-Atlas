@@ -7,6 +7,9 @@
 
 const FALLBACK_HASH = '1a156e1d7914fd17a78f4397958299d63b79641fe6dc1c02f70ac046ee445059'; // sha256("shs-atlas:" + password)
 const COOKIE = 'shs_beta';
+// dev console: its code (/_dev/*) is only sent with a second cookie, set by the dev code (DEV_PASSWORD env var, else this hash)
+const DEV_FALLBACK_HASH = 'eadb0c3f27d4647fcd90c54a3a55f50ed357b43556f4af9ba52296ca63dc307d'; // sha256("shs-atlas-dev:" + code)
+const DEV_COOKIE = 'shs_dev';
 const OPEN = ['/favicon.png', '/apple-touch-icon.png', '/logo.png'];
 
 const enc = new TextEncoder();
@@ -26,15 +29,33 @@ function same(a, b) { // constant-time compare
   let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return d === 0;
 }
-function cookieOf(req) {
-  const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|;\\s*)' + COOKIE + '=([a-f0-9]+)'));
+function cookieOf(req, name = COOKIE) {
+  const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|;\\s*)' + name + '=([a-f0-9]+)'));
   return m ? m[1] : '';
+}
+async function devHash(env) { return env.DEV_PASSWORD ? sha('shs-atlas-dev:' + env.DEV_PASSWORD) : DEV_FALLBACK_HASH; }
+async function devToken(env) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(await devHash(env)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return hex(await crypto.subtle.sign('HMAC', key, enc.encode('dev')));
 }
 
 export async function onRequest(ctx) {
   const { request, env, next } = ctx;
   const url = new URL(request.url);
 
+  if (url.pathname === '/__lock') { // sign out of the beta (and dev) on this device
+    return new Response(null, { status: 303, headers: [['Location', '/'], ['Set-Cookie', `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`], ['Set-Cookie', `${DEV_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`]] });
+  }
+  if (url.pathname === '/__dev') {
+    if (request.method !== 'POST' || !same(cookieOf(request), await token(env))) return new Response('no', { status: 403 });
+    const code = String((await request.formData()).get('code') || '').trim();
+    if (!same(await sha('shs-atlas-dev:' + code), await devHash(env))) { await new Promise(r => setTimeout(r, 1500)); return new Response('no', { status: 403 }); }
+    return new Response('ok', { headers: { 'Set-Cookie': `${DEV_COOKIE}=${await devToken(env)}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`, 'Cache-Control': 'no-store' } });
+  }
+  if (url.pathname.startsWith('/_dev/')) {
+    if (!same(cookieOf(request), await token(env)) || !same(cookieOf(request, DEV_COOKIE), await devToken(env))) return new Response('Not found', { status: 404 });
+    const res = await next(); const o = new Response(res.body, res); o.headers.set('Cache-Control', 'private, no-store'); return o;
+  }
   if (url.pathname === '/__unlock' && request.method === 'POST') {
     const form = await request.formData();
     const pw = String(form.get('pw') || '').trim();

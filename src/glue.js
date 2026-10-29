@@ -7,7 +7,7 @@ const STATES=['peek','half','full'];
 const setSheet=s=>{ sheet.dataset.state=s; grab.setAttribute('aria-label',s==='full'?'Collapse panel':'Expand panel'); if(s==='peek') body.scrollTop=0; };
 const reveal=el=>{ if(!el) return; requestAnimationFrame(()=>{ const t=el.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-8; body.scrollTo({top:t,behavior:reduce?'auto':'smooth'}); }); };
 // peek height: handle + chips + the directions heading and inputs
-function measurePeek(){ if(desk.matches) return; const r=sheet.querySelector('.route'); const h=r.getBoundingClientRect().bottom-sheet.getBoundingClientRect().top+14; if(h>80&&h<400) app.style.setProperty('--peek',Math.round(h)+'px'); }
+function measurePeek(){ if(desk.matches) return; const r=sheet.querySelector('.dirbar'); const h=r.getBoundingClientRect().bottom-sheet.getBoundingClientRect().top+14; if(h>80&&h<400) app.style.setProperty('--peek',Math.round(h)+'px'); }
 // drag the handle (or tap it to cycle)
 let drag=null;
 grab.addEventListener('pointerdown',e=>{ if(desk.matches) return; drag={y:e.clientY,t:performance.now(),base:sheet.getBoundingClientRect().top,moved:false}; grab.setPointerCapture(e.pointerId); sheet.classList.add('dragging'); });
@@ -93,5 +93,14 @@ window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,di
     buf=(buf+e.key.toLowerCase()).slice(-8); if(buf==='atlasdev'){ buf=''; openDev(); } });
   const brand=document.querySelector('.brand'); if(brand){ brand.style.pointerEvents='auto';
     brand.addEventListener('click',()=>{ const n=performance.now(); taps=taps.filter(t=>n-t<2500); taps.push(n); if(taps.length>=5){ taps=[]; openDev(); } }); } }
+// directions and Plan my day stay folded into two buttons until you need them
+const dirForm=$('dirForm'), dayForm=$('dayForm'), openDirB=$('openDir'), openDayB=$('openDay');
+const showDir=v=>{ dirForm.hidden=!v; openDirB.setAttribute('aria-expanded',String(v)); if(v){ dayForm.hidden=true; openDayB.setAttribute('aria-expanded','false'); } measurePeek(); };
+const showDay=v=>{ dayForm.hidden=!v; dayForm.open=v; openDayB.setAttribute('aria-expanded',String(v)); if(v){ dirForm.hidden=true; openDirB.setAttribute('aria-expanded','false'); } measurePeek(); };
+openDirB.onclick=()=>{ const v=dirForm.hidden; showDir(v); if(v){ if(!desk.matches) setSheet('half'); setTimeout(()=>(($('dFrom').value?$('dTo'):$('dFrom'))).focus(),50); } };
+openDayB.onclick=()=>{ const v=dayForm.hidden; showDay(v); if(v&&!desk.matches) setSheet('half'); };
+card.addEventListener('click',e=>{ if(e.target.closest('#dirTo,#dirFrom')) showDir(true); },true);
+new MutationObserver(()=>{ if($('dOut').childElementCount&&dirForm.hidden&&dayForm.hidden) showDir(true); }).observe($('dOut'),{childList:true});
+if($('dFrom').value||$('dTo').value) showDir(true);
 syncClear(); syncQ(); measurePeek(); viewOffset(); new ResizeObserver(measurePeek).observe(sheet);
 }

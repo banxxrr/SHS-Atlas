@@ -452,6 +452,14 @@ function segGeo(list,H=WALL_H){ // merged boxes, one per wall segment
 const WALLSEG={};
 { const add_=(f,gl,s)=>{ const k=f+(gl?'g':''); (WALLSEG[k]=WALLSEG[k]||[]).push(s); };
   const CUT={}; for(const [i,a,b] of DOOR_CUTS) (CUT[i]=CUT[i]||[]).push([a,b]);
+  // also drop wall bits that sit inside a doorway (leftover door-swing lines that showed as black slits through the gold)
+  const DR=DOORS.map(([f,x1,z1,x2,z2,t])=>{ const L=Math.hypot(x2-x1,z2-z1)||1; return {f,x1,z1,ux:(x2-x1)/L,uz:(z2-z1)/L,L,d:Math.max(.5,t*2.2)/2+.05}; });
+  PLAN_S.forEach(([f,gl,x1,z1,x2,z2,t],i)=>{ if(gl) return; for(const D of DR){ if(D.f!==f) continue;
+      // segment in door coords: a along the gap, b across it; clip to the box 0.03<a<L-0.03, |b|<d
+      const A=p=>[(p[0]-D.x1)*D.ux+(p[1]-D.z1)*D.uz,-(p[0]-D.x1)*D.uz+(p[1]-D.z1)*D.ux], P=A([x1,z1]), Q=A([x2,z2]);
+      let t0=0,t1=1; const clip=(p,q)=>{ if(Math.abs(p)<1e-9) return q>=0; const r=q/p; if(p<0){ if(r>t1) return false; if(r>t0) t0=r; } else { if(r<t0) return false; if(r<t1) t1=r; } return true; };
+      const dx=Q[0]-P[0], dy=Q[1]-P[1];
+      if(clip(-dx,P[0]-.03)&&clip(dx,D.L-.03-P[0])&&clip(-dy,P[1]+D.d)&&clip(dy,D.d-P[1])&&t1-t0>.001) (CUT[i]=CUT[i]||[]).push([t0,t1]); } });
   PLAN_S.forEach(([f,gl,x1,z1,x2,z2,t],i)=>{ if(!CUT[i]){ add_(f,gl,[x1,z1,x2,z2,t]); return; }
     // keep only the parts of this wall that aren't a doorway
     const cs=CUT[i].sort((p,q)=>p[0]-q[0]); let u0=0; const at=u=>[x1+(x2-x1)*u,z1+(z2-z1)*u];
@@ -463,11 +471,16 @@ const WALLSEG={};
     m.position.y=(f-1)*FH+PLATE; m.userData.floor=f; m.userData.glass=gl; scene.add(m); wallMeshes.push(m); } }
 /* ---- doorways: a gold threshold across each gap in the walls, so doors read as doors, not holes ---- */
 const doorMeshes=[];
-// each doorway is one solid gold block filling the whole gap, a little thicker and taller than the wall and tucked into the wall ends, so there are no seams
-{ const byF={}; for(const [f,x1,z1,x2,z2,t] of DOORS){ const L=Math.hypot(x2-x1,z2-z1); if(L<.3) continue; const ux=(x2-x1)/L, uz=(z2-z1)/L, e=.18;
-    (byF[f]=byF[f]||[]).push([x1-ux*e,z1-uz*e,x2+ux*e,z2+uz*e,Math.max(.5,t*1.8)]); }
+// each doorway gets a gold frame: a low threshold across the gap, full-height posts on both sides, and a header across the top
+{ const sill={}, post={}, head={}, push=(o,f,v)=>(o[f]=o[f]||[]).push(v);
+  for(const [f,x1,z1,x2,z2,t] of DOORS){ const L=Math.hypot(x2-x1,z2-z1); if(L<.3) continue; const ux=(x2-x1)/L, uz=(z2-z1)/L, d=Math.max(.5,t*2.2), pw=.16;
+    push(sill,f,[x1,z1,x2,z2,d]);
+    push(head,f,[x1-ux*pw,z1-uz*pw,x2+ux*pw,z2+uz*pw,d]);
+    push(post,f,[x1-ux*pw,z1-uz*pw,x1+ux*.04,z1+uz*.04,d]); push(post,f,[x2-ux*.04,z2-uz*.04,x2+ux*pw,z2+uz*pw,d]); }
   const mat=new THREE.MeshBasicMaterial({color:0xe8c703,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
-  for(const f in byF){ const m=new THREE.Mesh(segGeo(byF[f],WALL_H+.1),mat); m.position.y=(f-1)*FH+PLATE-.02; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } }
+  for(const f in sill){ const y0=(f-1)*FH+PLATE;
+    for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
+      m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }
 
 /* ---- interior room meshes ---- */
 const meshes=[];

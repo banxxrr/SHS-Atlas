@@ -477,7 +477,7 @@ const doorMeshes=[];
     push(sill,f,[x1,z1,x2,z2,d]);
     push(head,f,[x1-ux*pw,z1-uz*pw,x2+ux*pw,z2+uz*pw,d]);
     push(post,f,[x1-ux*pw,z1-uz*pw,x1+ux*.04,z1+uz*.04,d]); push(post,f,[x2-ux*.04,z2-uz*.04,x2+ux*pw,z2+uz*pw,d]); }
-  const mat=new THREE.MeshBasicMaterial({color:0xe8c703,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
+  const mat=new THREE.MeshBasicMaterial({color:0xe8c703,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
   for(const f in sill){ const y0=(f-1)*FH+PLATE;
     for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
       m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }

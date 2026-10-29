@@ -29,7 +29,7 @@ for(const f of [1,2,3]){ const S=segs.filter(s=>s.f===f);
         // gap must be open: no other wall crossing it
         if(S.some((w,wi)=>wi!==i&&wi!==j&&dist2seg(m,w)<.3)) continue;
         // it must open onto a room or hallway on at least one side
-        const n=[-out[1],out[0]]; if(!inside(f,m[0]+n[0]*1.2,m[1]+n[1]*1.2)&&!inside(f,m[0]-n[0]*1.2,m[1]-n[1]*1.2)) continue;
+        const n=[-out[1],out[0]]; if(!inside(f,m[0]+n[0]*1.2,m[1]+n[1]*1.2)||!inside(f,m[0]-n[0]*1.2,m[1]-n[1]*1.2)) continue; // indoor doorways only: a room or hall on both sides (gaps in outside walls are windows)
         doors.push([f,+p[0].toFixed(2),+p[1].toFixed(2),+q[0].toFixed(2),+q[1].toFixed(2),Math.max(s.t,t.t)]); } } } });
 }
 fs.writeFileSync('doors.js','/* doorways: gaps between collinear wall segments on the traced plans [floor,x1,z1,x2,z2,thickness] */\nconst DOORS='+JSON.stringify(doors)+';\n');

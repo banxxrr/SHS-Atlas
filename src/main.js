@@ -484,6 +484,18 @@ const doorMeshes=[];
     for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
       m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }
 
+/* ---- PWC atrium stairs: wide wooden seating stairs that overlook the Hydration Station café and climb to the PWC on level 2.
+   They're open space you walk through, not a room: floor them like a hallway and draw the steps on top. ---- */
+const stairMeshes=[];
+{ const a=rooms.find(r=>r.name==='Atrium stairs'&&r.floor===1);
+  if(a){ a.kind='hall'; a.type='link'; a.conf=false; a.name='';
+    const N=10, x0=a.x0+.3, x1=a.x1-.3, zb=a.z1-.3, zt=a.z0+.3, dz=(zb-zt)/N, rise=(FH)/N;
+    const mat=new THREE.MeshLambertMaterial({color:0xd8b98f});
+    for(let i=0;i<N;i++){ const h=rise*(i+1), g=new THREE.BoxGeometry(x1-x0,h,dz+.02); const m=new THREE.Mesh(g,mat);
+      m.position.set((x0+x1)/2,PLATE+h/2,zb-dz*(i+.5)); m.userData.floor=1; scene.add(m); stairMeshes.push(m); }
+    HALL_LABELS.push([1,'Atrium stairs',(a.x0+a.x1)/2,(a.z0+a.z1)/2]);
+    VLINKS.push(['s','Atrium stairs',(a.x0+a.x1)/2,a.z0+1,[1,2]]); } }
+
 /* ---- interior room meshes ---- */
 const meshes=[];
 for(const r of rooms){
@@ -576,7 +588,7 @@ function readTheme(){ inval();
     r.mesh.material.color.set(v(tok)); if(r.edges) r.edges.material.color.set(r.conf?C.edge:v('--line')); }
   for(const s of shells) s.outline.material.color.set(C.edge);
   for(const w of wallMeshes) if(!w.userData.glass) w.material.color.set(v('--wall'));
-  if(doorMeshes.length) doorMeshes[0].material.color.set(v('--door'));
+  if(doorMeshes.length) doorMeshes[0].material.color.set(v('--door')); if(stairMeshes.length) stairMeshes[0].material.color.set(v('--stairs'));
 }
 function rebuildLabels(){ for(const r of pick) roomLabel(r); areaLabels(); applyMode(); }
 
@@ -599,6 +611,7 @@ function applyMode(){ inval();
   areaSprites.forEach(s=>s.visible=out);
   hallSprites.forEach(s=>s.visible=!out && s.userData.floor===+mode);
   for(const d of doorMeshes) d.visible=!out && d.userData.floor===+mode;
+  for(const m of stairMeshes) m.visible=!out && m.userData.floor<=+mode;
   for(const w of wallMeshes){ const f=w.userData.floor; w.visible=!out && f<=+mode; const cur=f===+mode;
     if(w.userData.glass){ w.material.opacity=cur?.35:.04; continue; }
     w.material.opacity=cur?1:.06; w.material.depthWrite=cur; }

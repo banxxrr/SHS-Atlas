@@ -19,7 +19,7 @@
   --accent:#007236; --accent-ink:#ffffff; --accent-soft:#e0f0e6; --pine:#007236; --gold:#e8c703; --gold-ink:#241a00; --route:#e0202b; --route-case:#ffffff; --ok:#1d7a46; --ok-soft:#e5f4ea; --warn:#9a5b00; --warn-soft:#fdf1dc;
   --shadow:0 1px 2px rgba(20,23,28,.08),0 6px 20px rgba(20,23,28,.12); --shadow-lg:0 2px 6px rgba(20,23,28,.08),0 18px 48px rgba(20,23,28,.18);
   --scene:#eef0ec; --ground:#e9ebe6; --edge:#5b6672; --plate:#d9dde2; --corr:#eceff2;
-  --hall:#a7b3c1; --hall-tag:#ffffff; --hall-ink:#3d4855; --wall:#1f252d; --door:#e8b400;
+  --hall:#a7b3c1; --hall-tag:#ffffff; --hall-ink:#3d4855; --wall:#1f252d; --door:#e8b400; --stairs:#d8b98f;
   --t-class:#ffffff; --t-lab:#c4e7df; --t-arts:#f6d3db; --t-ath:#cfe0f7; --t-comm:#f8e2b4;
   --t-svc:#e0daf4; --t-lib:#cdebc9; --t-link:#d8e2ec; --t-out:#cde7bd; --t-unk:#eef0f2;
   --lot:#dfe2e5; --road:#ffffff; --water:#a9cdf0; --track:#e2a184; --field:#bfe0a6;
@@ -36,7 +36,7 @@
   --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#17191d; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.45); --shadow-lg:0 2px 6px rgba(0,0,0,.4),0 18px 48px rgba(0,0,0,.55);
   --scene:#1b1d21; --ground:#202328; --edge:#9aa4ae; --plate:#2c3036; --corr:#2a2e34;
-  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400;
+  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
   --t-class:#3a3f46; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
   --t-svc:#4c4669; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2c3036;
   --lot:#2a2d32; --road:#3a3f46; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }}
@@ -45,7 +45,7 @@
   --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#17191d; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.45); --shadow-lg:0 2px 6px rgba(0,0,0,.4),0 18px 48px rgba(0,0,0,.55);
   --scene:#1b1d21; --ground:#202328; --edge:#9aa4ae; --plate:#2c3036; --corr:#2a2e34;
-  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400;
+  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
   --t-class:#3a3f46; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
   --t-svc:#4c4669; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2c3036;
   --lot:#2a2d32; --road:#3a3f46; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }
@@ -969,6 +969,18 @@ const doorMeshes=[];
     for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
       m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }
 
+/* ---- PWC atrium stairs: wide wooden seating stairs that overlook the Hydration Station café and climb to the PWC on level 2.
+   They're open space you walk through, not a room: floor them like a hallway and draw the steps on top. ---- */
+const stairMeshes=[];
+{ const a=rooms.find(r=>r.name==='Atrium stairs'&&r.floor===1);
+  if(a){ a.kind='hall'; a.type='link'; a.conf=false; a.name='';
+    const N=10, x0=a.x0+.3, x1=a.x1-.3, zb=a.z1-.3, zt=a.z0+.3, dz=(zb-zt)/N, rise=(FH)/N;
+    const mat=new THREE.MeshLambertMaterial({color:0xd8b98f});
+    for(let i=0;i<N;i++){ const h=rise*(i+1), g=new THREE.BoxGeometry(x1-x0,h,dz+.02); const m=new THREE.Mesh(g,mat);
+      m.position.set((x0+x1)/2,PLATE+h/2,zb-dz*(i+.5)); m.userData.floor=1; scene.add(m); stairMeshes.push(m); }
+    HALL_LABELS.push([1,'Atrium stairs',(a.x0+a.x1)/2,(a.z0+a.z1)/2]);
+    VLINKS.push(['s','Atrium stairs',(a.x0+a.x1)/2,a.z0+1,[1,2]]); } }
+
 /* ---- interior room meshes ---- */
 const meshes=[];
 for(const r of rooms){
@@ -1166,7 +1178,7 @@ function readTheme(){ inval();
     r.mesh.material.color.set(v(tok)); if(r.edges) r.edges.material.color.set(r.conf?C.edge:v('--line')); }
   for(const s of shells) s.outline.material.color.set(C.edge);
   for(const w of wallMeshes) if(!w.userData.glass) w.material.color.set(v('--wall'));
-  if(doorMeshes.length) doorMeshes[0].material.color.set(v('--door'));
+  if(doorMeshes.length) doorMeshes[0].material.color.set(v('--door')); if(stairMeshes.length) stairMeshes[0].material.color.set(v('--stairs'));
 }
 function rebuildLabels(){ for(const r of pick) roomLabel(r); areaLabels(); applyMode(); }
 
@@ -1189,6 +1201,7 @@ function applyMode(){ inval();
   areaSprites.forEach(s=>s.visible=out);
   hallSprites.forEach(s=>s.visible=!out && s.userData.floor===+mode);
   for(const d of doorMeshes) d.visible=!out && d.userData.floor===+mode;
+  for(const m of stairMeshes) m.visible=!out && m.userData.floor<=+mode;
   for(const w of wallMeshes){ const f=w.userData.floor; w.visible=!out && f<=+mode; const cur=f===+mode;
     if(w.userData.glass){ w.material.opacity=cur?.35:.04; continue; }
     w.material.opacity=cur?1:.06; w.material.depthWrite=cur; }

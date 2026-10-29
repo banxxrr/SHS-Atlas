@@ -307,11 +307,11 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
       <div class="chips" id="chips" aria-label="Quick places">
         <button class="chipbtn" data-q="nurse"><i class="dot" style="background:var(--t-svc)"></i>Nurse</button>
         <button class="chipbtn" data-q="main office"><i class="dot" style="background:var(--t-svc)"></i>Main Office</button>
-        <button class="chipbtn" data-q="5000"><i class="dot" style="background:var(--t-ath)"></i>Pool</button>
-        <button class="chipbtn" data-q="information & learning"><i class="dot" style="background:var(--t-lib)"></i>Library</button>
-        <button class="chipbtn" data-q="commons"><i class="dot" style="background:var(--t-comm)"></i>Cafeterias</button>
+        <button class="chipbtn" data-q="aquatic"><i class="dot" style="background:var(--t-ath)"></i>Pool</button>
+        <button class="chipbtn" data-q="library"><i class="dot" style="background:var(--t-lib)"></i>Library</button>
+        <button class="chipbtn" data-q="cafeteria"><i class="dot" style="background:var(--t-comm)"></i>Cafeterias</button>
         <button class="chipbtn" data-q="student services"><i class="dot" style="background:var(--t-svc)"></i>Student Services</button>
-        <button class="chipbtn" data-q="testing center"><i class="dot" style="background:var(--t-class)"></i>Testing</button>
+        <button class="chipbtn" data-q="testing"><i class="dot" style="background:var(--t-class)"></i>Testing</button>
       </div>
 
       <div class="sec dir">
@@ -1250,14 +1250,40 @@ function estimate(numStr){
   return best; }
 function zoneText(n){ const z=Math.floor(n/1000); return ({1:'West Building, level 1',2:'West Building, level 2',3:'The Link, between the two buildings',4:'Performing arts wing',5:'Field House & natatorium',6:'East Building, level 1',7:'East Building, level 2',8:'East Building, level 3'})[z]||'Unknown zone'; }
 function sortKey(r){ const d=disp(r); return (d.num?'a'+d.num:'b'+d.name); }
+/* ---- search: ranked by how well the number or name matches; everyday words map to the school's names ---- */
+const SYN={library:['learning center','ilc','library'],libraries:['learning center','ilc','library'],ilc:['learning center','ilc'],
+  cafeteria:['commons','servery','dining','café','cafe','snack bar'],cafeterias:['commons','servery','dining','café','cafe','snack bar'],lunch:['commons','servery','dining','café','snack bar'],food:['commons','servery','café','snack bar'],cafe:['café','cafe','hydration'],
+  bathroom:['rr','restroom'],bathrooms:['rr','restroom'],restroom:['rr','restroom'],restrooms:['rr','restroom'],toilet:['rr','restroom'],washroom:['rr','restroom'],
+  gym:['field house','sports center','gym','fitness'],pool:['aquatic','natatorium','pool'],swim:['aquatic','pool'],
+  counselor:['student services','counsel'],counseling:['student services','counsel'],guidance:['student services'],
+  auditorium:['auditorium','performing arts','theat','recital'],theater:['theat','performing arts','auditorium'],theatre:['theat','performing arts','auditorium'],
+  elevator:['elevator'],stairs:['stair'],office:['main office','office'],attendance:['attendance'],nurse:['nurse','health office']};
+const pubTxt=r=>r.psrc&&r.note? r.note.split(PLAN_NOTE)[0].toLowerCase() : '';
+function searchRooms(s){
+  const words=s.split(/\s+/).filter(Boolean), terms=SYN[s]||(words.length===1&&SYN[words[0]])||[s];
+  const isNum=/^\d{2,4}[a-z]?$/.test(s), out=[];
+  for(const r of confirmed.concat(pick.filter(r=>!r.conf&&edits[r.id]))){ if(r.ground&&!r.name) continue;
+    const d=disp(r), num=(d.num||'').toLowerCase(), nm=(d.name||'').toLowerCase().trim(), junk=!nm||nm==='room';
+    let sc=0;
+    if(num&&num===s) sc=100; else if(isNum&&num.startsWith(s)) sc=80-num.length;
+    const child=/^\d{4}[a-z]/.test(num);
+    if(!isNum){ terms.forEach((t,ti)=>{ const b0=sc; const w=new RegExp('(^|[^a-z])'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+        if(nm===t) sc=Math.max(sc,70); else if(nm.startsWith(t)) sc=Math.max(sc,60); else if(w.test(nm)) sc=Math.max(sc,50); else if(t.length>=4&&nm.includes(t)) sc=Math.max(sc,40);
+        else if(t.length>=4&&!child&&pubTxt(r).includes(t)) sc=Math.max(sc,25);
+        if(sc>b0) sc-=ti*4; });
+      if(words.length>1&&words.every(w=>nm.includes(w))) sc=Math.max(sc,55); }
+    if(!sc) continue;
+    if(junk&&!isNum) continue;
+    if(child&&!isNum&&(MINOR.test(nm)||/office$/.test(nm))) continue; // lettered back rooms inside a suite only show for number searches
+    if(r.major) sc+=8; if(MINOR.test(nm)) sc-=15; if(!r.conf) sc-=5;
+    out.push([sc,r]); }
+  out.sort((a,b)=>b[0]-a[0]||sortKey(a[1]).localeCompare(sortKey(b[1]),undefined,{numeric:true}));
+  return out.slice(0,20).map(x=>x[1]); }
 function renderList(){
   const s=q.value.trim().toLowerCase();
   // no browse-all list: results only appear once something is typed
   if(!s){ listEl.innerHTML=''; listEl.closest('.sec').hidden=true; return; } listEl.closest('.sec').hidden=false;
-  let L=confirmed.slice().concat(pick.filter(r=>!r.conf&&(edits[r.id]||(s&&r.est3&&r.range.includes(s)))));
-  if(s) L=L.filter(r=>{ const d=disp(r); return (d.num+' '+d.name+' '+BLD[r.bld]+' '+(r.note||'')).toLowerCase().includes(s); });
-  else if(mode!=='all') L=L.filter(r=>onFloor(r,+mode)||(r.ground&&mode==='1'));
-  L.sort((a,b)=>sortKey(a).localeCompare(sortKey(b),undefined,{numeric:true}));
+  const L=searchRooms(s);
   listEl.innerHTML=''; const frag=document.createDocumentFragment();
   if(/^\d{4}$/.test(s) && !L.some(r=>disp(r).num.includes(s)||(r.range||'')==='≈'+s)){
     const e=estimate(s), b=document.createElement('button'); b.className='row est';

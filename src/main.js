@@ -451,7 +451,11 @@ function segGeo(list,H=WALL_H){ // merged boxes, one per wall segment
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals(); return g; }
 const WALLSEG={};
 { const add_=(f,gl,s)=>{ const k=f+(gl?'g':''); (WALLSEG[k]=WALLSEG[k]||[]).push(s); };
-  for(const [f,gl,x1,z1,x2,z2,t] of PLAN_S){ add_(f,gl,[x1,z1,x2,z2,t]); }
+  const CUT={}; for(const [i,a,b] of DOOR_CUTS) (CUT[i]=CUT[i]||[]).push([a,b]);
+  PLAN_S.forEach(([f,gl,x1,z1,x2,z2,t],i)=>{ if(!CUT[i]){ add_(f,gl,[x1,z1,x2,z2,t]); return; }
+    // keep only the parts of this wall that aren't a doorway
+    const cs=CUT[i].sort((p,q)=>p[0]-q[0]); let u0=0; const at=u=>[x1+(x2-x1)*u,z1+(z2-z1)*u];
+    for(const [a,b] of cs.concat([[1,1]])){ if(a-u0>.002) add_(f,gl,[...at(u0),...at(a),t]); u0=Math.max(u0,b); } });
   for(const r of rooms){ if(r.kind!=='room'||!/^poster/.test(r.src||'')) continue; const T=.22;
     for(const s of [[r.x0,r.z0,r.x1,r.z0],[r.x0,r.z1,r.x1,r.z1],[r.x0,r.z0,r.x0,r.z1],[r.x1,r.z0,r.x1,r.z1]]) add_(r.floor,0,[...s,T]); }
   for(const k in WALLSEG){ const gl=k.endsWith('g'), f=parseInt(k,10);
@@ -459,9 +463,16 @@ const WALLSEG={};
     m.position.y=(f-1)*FH+PLATE; m.userData.floor=f; m.userData.glass=gl; scene.add(m); wallMeshes.push(m); } }
 /* ---- doorways: a gold threshold across each gap in the walls, so doors read as doors, not holes ---- */
 const doorMeshes=[];
-{ const byF={}; for(const [f,x1,z1,x2,z2,t] of DOORS) (byF[f]=byF[f]||[]).push([x1,z1,x2,z2,Math.max(.6,t*2.5)]);
-  for(const f in byF){ const m=new THREE.Mesh(segGeo(byF[f],1.1),new THREE.MeshBasicMaterial({color:0xe8c703}));
-    m.position.y=(f-1)*FH+PLATE+.02; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } }
+// each doorway gets a gold frame: a low threshold across the gap, full-height posts on both sides, and a header across the top
+{ const sill={}, post={}, head={}, push=(o,f,v)=>(o[f]=o[f]||[]).push(v);
+  for(const [f,x1,z1,x2,z2,t] of DOORS){ const L=Math.hypot(x2-x1,z2-z1); if(L<.3) continue; const ux=(x2-x1)/L, uz=(z2-z1)/L, d=Math.max(.5,t*2.2), pw=.16;
+    push(sill,f,[x1,z1,x2,z2,d]);
+    push(head,f,[x1-ux*pw,z1-uz*pw,x2+ux*pw,z2+uz*pw,d]);
+    push(post,f,[x1-ux*pw,z1-uz*pw,x1+ux*.02,z1+uz*.02,d]); push(post,f,[x2-ux*.02,z2-uz*.02,x2+ux*pw,z2+uz*pw,d]); }
+  const mat=new THREE.MeshBasicMaterial({color:0xe8c703});
+  for(const f in sill){ const y0=(f-1)*FH+PLATE;
+    for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
+      m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }
 
 /* ---- interior room meshes ---- */
 const meshes=[];
@@ -546,7 +557,7 @@ function readTheme(){ inval();
     r.mesh.material.color.set(v(tok)); if(r.edges) r.edges.material.color.set(r.conf?C.edge:v('--line')); }
   for(const s of shells) s.outline.material.color.set(C.edge);
   for(const w of wallMeshes) if(!w.userData.glass) w.material.color.set(v('--wall'));
-  for(const d of doorMeshes) d.material.color.set(v('--door'));
+  if(doorMeshes.length) doorMeshes[0].material.color.set(v('--door'));
 }
 function rebuildLabels(){ for(const r of pick) roomLabel(r); areaLabels(); applyMode(); }
 

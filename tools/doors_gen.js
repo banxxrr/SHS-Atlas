@@ -35,3 +35,32 @@ for(const f of [1,2,3]){ const S=segs.filter(s=>s.f===f);
 fs.writeFileSync('doors.js','/* doorways: gaps between collinear wall segments on the traced plans [floor,x1,z1,x2,z2,thickness] */\nconst DOORS='+JSON.stringify(doors)+';\n');
 const c={}; doors.forEach(d=>c[d[0]]=(c[d[0]]||0)+1); console.log('doors',doors.length,c);
 const w=doors.map(d=>Math.hypot(d[3]-d[1],d[4]-d[2])).sort((a,b)=>a-b); console.log('width p10/50/90',w[w.length*.1|0].toFixed(2),w[w.length/2|0].toFixed(2),w[w.length*.9|0].toFixed(2));
+
+// ---- rooms with no doorway found: the plan drew their door inside a solid wall line.
+// Put a door on the longest stretch of the room's edge that faces a hallway, and cut the wall there.
+const halls={}; for(const h of o.PLAN_H){ (halls[h[0]]=halls[h[0]]||[]).push(unpack(h[2])); }
+const inHall=(f,x,z)=>(halls[f]||[]).some(P=>inPoly(x,z,P));
+const segD=(p,a,b)=>dist2seg(p,{a,b});
+const added=[], cuts=[];
+for(const r of o.PLAN_R){ const f=r[0]; if(f>3) continue; const P=unpack(r[5]); if(P.length<3) continue;
+  let A=0; for(let i=0,j=P.length-1;i<P.length;j=i++) A+=(P[j][0]*P[i][1]-P[i][0]*P[j][1]); A=Math.abs(A)/2; if(A<5) continue;
+  const near=doors.concat(added).some(d=>d[0]===f&&P.some((p,i)=>segD([(d[1]+d[3])/2,(d[2]+d[4])/2],p,P[(i+1)%P.length])<1.0));
+  if(near) continue;
+  let best=null;
+  for(let i=0;i<P.length;i++){ const a=P[i], b=P[(i+1)%P.length], L=Math.hypot(b[0]-a[0],b[1]-a[1]); if(L<1.4) continue;
+    const u=[(b[0]-a[0])/L,(b[1]-a[1])/L]; let n=[-u[1],u[0]]; const mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+    if(inPoly(mid[0]+n[0]*.4,mid[1]+n[1]*.4,P)) n=[-n[0],-n[1]];
+    let run=0,start=0;
+    for(let s=.5;s<=L-.5;s+=.25){ const p=[a[0]+u[0]*s,a[1]+u[1]*s]; const ok=inHall(f,p[0]+n[0]*.9,p[1]+n[1]*.9);
+      if(ok){ if(!run) start=s; run=s-start+.25; if(!best||run>best.run) best={run,a,u,s0:start,s1:s,n}; } else run=0; } }
+  if(!best||best.run<1.2) continue;
+  const w=A>350?1.8:1.0, c=(best.s0+best.s1)/2, x1=best.a[0]+best.u[0]*(c-w/2), z1=best.a[1]+best.u[1]*(c-w/2), x2=best.a[0]+best.u[0]*(c+w/2), z2=best.a[1]+best.u[1]*(c+w/2);
+  added.push([f,+x1.toFixed(2),+z1.toFixed(2),+x2.toFixed(2),+z2.toFixed(2),.22]);
+  // cut every parallel wall segment that runs through the new doorway
+  o.PLAN_S.forEach((s,si)=>{ if(s[0]!==f||s[1]) return; const sa=[s[2],s[3]], sb=[s[4],s[5]], sl=Math.hypot(sb[0]-sa[0],sb[1]-sa[1]); if(sl<.2) return;
+    const su=[(sb[0]-sa[0])/sl,(sb[1]-sa[1])/sl]; if(Math.abs(su[0]*best.u[0]+su[1]*best.u[1])<.95) return;
+    const m=[(x1+x2)/2,(z1+z2)/2]; const perp=Math.abs((m[0]-sa[0])*su[1]-(m[1]-sa[1])*su[0]); if(perp>.6) return;
+    const t1=((x1-sa[0])*su[0]+(z1-sa[1])*su[1])/sl, t2=((x2-sa[0])*su[0]+(z2-sa[1])*su[1])/sl; const lo=Math.max(0,Math.min(t1,t2)), hi=Math.min(1,Math.max(t1,t2));
+    if(hi-lo>.0001&&hi>0&&lo<1) cuts.push([si,+lo.toFixed(4),+hi.toFixed(4)]); }); }
+fs.writeFileSync('doors.js','/* doorways [floor,x1,z1,x2,z2,thickness,added]: gaps found between collinear wall segments, plus doors added on the hallway side of rooms whose door the plan drew as solid wall */\nconst DOORS='+JSON.stringify(doors.map(d=>d.concat(0)).concat(added.map(d=>d.concat(1))))+';\n/* wall pieces removed for the added doors [PLAN_S index, from, to] (0–1 along the segment) */\nconst DOOR_CUTS='+JSON.stringify(cuts)+';\n');
+console.log('added',added.length,'cuts',cuts.length);

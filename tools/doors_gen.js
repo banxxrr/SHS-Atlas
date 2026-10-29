@@ -9,6 +9,9 @@ for(const h of o.PLAN_H){ const f=h[0]; (areas[f]=areas[f]||[]).push(unpack(h[2]
 const inside=(f,x,z)=>(areas[f]||[]).some(P=>inPoly(x,z,P));
 const segs=o.PLAN_S.filter(s=>!s[1]).map(s=>({f:s[0],a:[s[2],s[3]],b:[s[4],s[5]],t:s[6]}));
 const doors=[], fills=[];
+const STAFF=/storage|closet|\bmech|electrical|elec\b|custodial|janitor|maintenance|boiler|chiller|panel ?boards|\bidf\b|\bmdf\b|receiving|grounds|cooler|pantry|food prep|wash station|drying area|pool (filter|equipment)|cogen|fire pump|\bserver\b|trash|recycl|loading|^equipment$|^kitchen$|fire panel|dimmer|sprinkler|riser|telecom|shaft|chase/i;
+const staffP={}; for(const r of o.PLAN_R){ if(STAFF.test(r[3]||'')) (staffP[r[0]]=staffP[r[0]]||[]).push(unpack(r[5])); }
+const inStaff=(f,x,z)=>(staffP[f]||[]).some(P=>inPoly(x,z,P));
 const roomsP={}, hallsP={}; for(const r of o.PLAN_R){ (roomsP[r[0]]=roomsP[r[0]]||[]).push(unpack(r[5])); } for(const h of o.PLAN_H){ (hallsP[h[0]]=hallsP[h[0]]||[]).push(unpack(h[2])); }
 const sideOf=(f,x,z)=>(roomsP[f]||[]).some(P=>inPoly(x,z,P))?'room':(hallsP[f]||[]).some(P=>inPoly(x,z,P))?'hall':'none';
 const dist2seg=(p,s)=>{const [ax,az]=s.a,[bx,bz]=s.b,dx=bx-ax,dz=bz-az,L=dx*dx+dz*dz||1;let u=((p[0]-ax)*dx+(p[1]-az)*dz)/L;u=Math.max(0,Math.min(1,u));return Math.hypot(ax+u*dx-p[0],az+u*dz-p[1]);};
@@ -36,6 +39,8 @@ for(const f of [1,2,3]){ const S=segs.filter(s=>s.f===f);
         if(A==='hall'&&B==='hall') continue;
         // outside (or nothing traced) on a side: it's a window in an outer wall, so close it with wall
         if(A==='none'||B==='none'){ fills.push([f,+p[0].toFixed(2),+p[1].toFixed(2),+q[0].toFixed(2),+q[1].toFixed(2),Math.max(s.t,t.t)]); continue; }
+        // doorways into closets, storage and mechanical rooms are left off the map: close them like wall
+        if(inStaff(f,m[0]+n[0]*1.2,m[1]+n[1]*1.2)||inStaff(f,m[0]-n[0]*1.2,m[1]-n[1]*1.2)){ fills.push([f,+p[0].toFixed(2),+p[1].toFixed(2),+q[0].toFixed(2),+q[1].toFixed(2),Math.max(s.t,t.t)]); continue; }
         doors.push([f,+p[0].toFixed(2),+p[1].toFixed(2),+q[0].toFixed(2),+q[1].toFixed(2),Math.max(s.t,t.t)]); } } } });
 }
 // merge doors that sit on top of each other (the same doorway found from several wall pieces)
@@ -52,7 +57,7 @@ const halls={}; for(const h of o.PLAN_H){ (halls[h[0]]=halls[h[0]]||[]).push(unp
 const inHall=(f,x,z)=>(halls[f]||[]).some(P=>inPoly(x,z,P));
 const segD=(p,a,b)=>dist2seg(p,{a,b});
 const added=[], cuts=[];
-for(const r of o.PLAN_R){ const f=r[0]; if(f>3) continue; const P=unpack(r[5]); if(P.length<3) continue;
+for(const r of o.PLAN_R){ const f=r[0]; if(f>3||STAFF.test(r[3]||'')||/hydration/i.test(r[3]||'')) continue; const P=unpack(r[5]); if(P.length<3) continue;
   let A=0; for(let i=0,j=P.length-1;i<P.length;j=i++) A+=(P[j][0]*P[i][1]-P[i][0]*P[j][1]); A=Math.abs(A)/2; if(A<5) continue;
   const near=doors.concat(added).some(d=>d[0]===f&&P.some((p,i)=>segD([(d[1]+d[3])/2,(d[2]+d[4])/2],p,P[(i+1)%P.length])<1.0));
   if(near) continue;

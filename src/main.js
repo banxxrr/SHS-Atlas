@@ -13,6 +13,7 @@ const TYPES = {
   lib:{label:'Library & study', tok:'--t-lib'},
   link:{label:'Walkway', tok:'--t-link'},
   out:{label:'Outdoors', tok:'--t-out'},
+  staff:{label:'Staff only', tok:'--t-staff'},
   unk:{label:'Unconfirmed room', tok:'--t-unk'},
   bldg:{label:'Building', tok:'--t-unk'}
 };
@@ -486,7 +487,7 @@ const doorMeshes=[];
     for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
       m.position.y=y0+y; m.userData.floor=+f; m.renderOrder=2; scene.add(m); doorMeshes.push(m); } } }
 
-/* ---- PWC atrium stairs: wide wooden seating stairs that overlook the Hydration Station café and climb to the PWC on level 2.
+/* ---- PWC atrium stairs: wide wooden seating stairs that overlook the PWC café area and climb to the PWC on level 2.
    They're open space you walk through, not a room: floor them like a hallway and draw the steps on top. ---- */
 const stairMeshes=[];
 { const a=rooms.find(r=>r.name==='Atrium stairs'&&r.floor===1);
@@ -500,6 +501,13 @@ const stairMeshes=[];
 
 /* facilities hallway codes (L10, 1400H, 6B…) mean nothing to visitors: strip the code, hide labels that are only a code */
 function hallName(t){ const n=t.replace(/^(?:[A-Z]{0,2}\d+[A-Z]?|[A-Z]\d*)\s+/,'').replace(/\s+[A-Z]{1,2}\d+[A-Z]?$/,'').trim(); return /^(corridor|passageway|hallway|hall|corr\.?)$/i.test(n)||!n? '' : n; }
+/* ---- staff-only spaces (storage, closets, mechanical, electrical, custodial, kitchens…): plain gray blocks, no label, no doors.
+   They stay searchable by number or name and still open a card, for whoever does need one. ---- */
+const STAFF=/storage|closet|\bmech|electrical|elec\b|custodial|janitor|maintenance|boiler|chiller|panel ?boards|\bidf\b|\bmdf\b|receiving|grounds|cooler|pantry|food prep|wash station|drying area|pool (filter|equipment)|cogen|fire pump|\bserver\b|trash|recycl|loading|^equipment$|^kitchen$|fire panel|dimmer|sprinkler|riser|telecom|shaft|chase/i;
+for(const r of rooms){ if(r.kind==='room'&&!r.major&&STAFF.test((r.name||'').trim())){ r.staff=true; r.type='staff'; } }
+/* hydration stations are left off the map: the space reads as open floor */
+for(const r of rooms){ if(r.kind==='room'&&/hydration/i.test(r.name||'')){ r.kind='hall'; r.type='link'; r.conf=false; r.name=''; r.num=''; } }
+
 /* ---- suites: back rooms (offices, storage, showers…) become part of their suite: one space, one label, one card ---- */
 { const byNum={}; for(const r of rooms) if(r.kind==='room'&&r.num) byNum[r.floor+':'+r.num]=r;
   for(const [f,c,p] of SUITE_MERGE){ const kid=byNum[f+':'+c], par=byNum[f+':'+p]; if(kid&&par&&kid!==par){ kid.mergeInto=par; kid.type=par.type; } }
@@ -553,6 +561,7 @@ function centerOf(r){ return [(r.x0+r.x1)/2,(r.z0+r.z1)/2]; }
 const MINOR=/^(|room|rm|office|offices|ss office|.*\bstorage\b.*|electrical|cogen electrical|custodial|maintenance|mech\.?|mech\.? ?(room|rm)|mechanical( rm| room)?|chiller.*|boiler.*|idf|mdf|panel ?boards|receiving|grounds|cooler|pantry|food prep|wash station|drying area|vestibule|copy room|mail room|chem\.? prep.*|equipment|equipment mgr\.? office|break room|staff lounge|director's office|psych|speech|changing rm|dressing rm|showers?|.*shower room|ada room|conference( rm)?|small group|kitchen|staff room|pool (filter|equipment) room)$/i, KEEP_OFFICE=/main|dean|counsel|nurse|attendance|student services|registrar|athletic|activities|principal|financial|security|testing/i;
 let SUITES=null;
 function roomLabel(r){
+  if(r.staff){ if(r.label){ disposeSprite(r.label); r.label=null; } return; }
   if(r.mergeInto){ if(r.label){ disposeSprite(r.label); r.label=null; } return; }
   if(!SUITES){ SUITES=new Set(); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&q.major) SUITES.add(q.num); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&/services|office|suite|center/i.test(q.name||'')) SUITES.add(q.num); }
   if(r.label){ disposeSprite(r.label); r.label=null; }
@@ -654,7 +663,7 @@ function zoneText(n){ const z=Math.floor(n/1000); return ({1:'West Building, lev
 function sortKey(r){ const d=disp(r); return (d.num?'a'+d.num:'b'+d.name); }
 /* ---- search: ranked by how well the number or name matches; everyday words map to the school's names ---- */
 const SYN={library:['learning center','ilc','library'],libraries:['learning center','ilc','library'],ilc:['learning center','ilc'],
-  cafeteria:['commons','servery','dining','café','cafe','snack bar'],cafeterias:['commons','servery','dining','café','cafe','snack bar'],lunch:['commons','servery','dining','café','snack bar'],food:['commons','servery','café','snack bar'],cafe:['café','cafe','hydration'],
+  cafeteria:['commons','servery','dining','café','cafe','snack bar'],cafeterias:['commons','servery','dining','café','cafe','snack bar'],lunch:['commons','servery','dining','café','snack bar'],food:['commons','servery','café','snack bar'],cafe:['café','cafe'],
   bathroom:['rr','restroom'],bathrooms:['rr','restroom'],restroom:['rr','restroom'],restrooms:['rr','restroom'],toilet:['rr','restroom'],washroom:['rr','restroom'],
   gym:['field house','sports center','gym','fitness'],pool:['aquatic','natatorium','pool'],swim:['aquatic','pool'],
   counselor:['student services','counsel'],counseling:['student services','counsel'],guidance:['student services'],

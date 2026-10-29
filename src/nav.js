@@ -77,7 +77,7 @@ const NAV=(()=>{
     while(a<cells.length-1){ let c=a+1; for(let k=Math.min(cells.length-1,a+300);k>a+1;k--){ if(clear(f,cells[a],cells[k])){ c=k; break; } } out.push(cells[c]); a=c; }
     return out; }
   // describe a leg by the landmarks you walk past (commons, library, gym…), not facilities hallway codes
-  const LANDMARK=/commons|learning center|ilc|library|main office|student services|nurse|field house|sports center|fitness|aquatic|natatorium|caf[eé]|servery|snack|auditorium|theat|recital|performing|forum|atrium|lobby|book ?store|attendance|testing|college & career|hydration|wellness|little patriots/i;
+  const LANDMARK=/commons|learning center|ilc|library|main office|student services|nurse|field house|sports center|fitness|aquatic|natatorium|caf[eé]|servery|snack|auditorium|theat|recital|performing|forum|atrium|lobby|book ?store|attendance|testing|college & career|wellness|little patriots/i;
   const LMK={};
   function viaNames(L){ const C=LMK[L.floor]||(LMK[L.floor]=rooms.filter(r=>r.floor===L.floor&&r.kind==='room'&&r.conf&&!r.mergeInto&&LANDMARK.test(disp(r).name)));
     const names=[];

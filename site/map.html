@@ -1232,6 +1232,8 @@ function zoneText(n){ const z=Math.floor(n/1000); return ({1:'West Building, lev
 function sortKey(r){ const d=disp(r); return (d.num?'a'+d.num:'b'+d.name); }
 function renderList(){
   const s=q.value.trim().toLowerCase();
+  // no browse-all list: results only appear once something is typed
+  if(!s){ listEl.innerHTML=''; listEl.closest('.sec').hidden=true; return; } listEl.closest('.sec').hidden=false;
   let L=confirmed.slice().concat(pick.filter(r=>!r.conf&&(edits[r.id]||(s&&r.est3&&r.range.includes(s)))));
   if(s) L=L.filter(r=>{ const d=disp(r); return (d.num+' '+d.name+' '+BLD[r.bld]+' '+(r.note||'')).toLowerCase().includes(s); });
   else if(mode!=='all') L=L.filter(r=>onFloor(r,+mode)||(r.ground&&mode==='1'));

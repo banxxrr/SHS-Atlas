@@ -1567,6 +1567,11 @@ new MutationObserver(viewOffset).observe(sheet,{attributes:true,attributeFilter:
 // Clear only appears once there is something to clear
 const syncClear=()=>{ $('dClear').hidden=!$('dOut').childElementCount&&!$('dFrom').value&&!$('dTo').value; };
 new MutationObserver(syncClear).observe($('dOut'),{childList:true}); ['dFrom','dTo'].forEach(id=>$(id).addEventListener('input',syncClear)); $('dClear').addEventListener('click',()=>setTimeout(syncClear));
+// map info panel (key, room numbers, about)
+const info=$('info'), openInfo=v=>{ info.hidden=!v; if(v){ card.hidden=true; info.scrollTop=0; $('infoClose').focus(); } };
+$('infoBtn').onclick=()=>openInfo(info.hidden); $('infoClose').onclick=()=>openInfo(false);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!info.hidden) openInfo(false); });
+new MutationObserver(()=>{ if(!card.hidden) info.hidden=true; }).observe(card,{attributes:true,attributeFilter:['hidden']});
 syncClear(); syncQ(); measurePeek(); viewOffset(); new ResizeObserver(measurePeek).observe(sheet);
 }
 

@@ -239,31 +239,52 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .edit .primary{height:38px;font-size:14px}
 #copyFallback{width:100%;margin-top:8px;height:80px;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm)}
 
+/* ---------- compact pass: smaller place card and panel ---------- */
+.card{padding:12px 14px 14px;max-height:52%}
+.card .top>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 8px;min-width:0}
+.card .num{font-size:22px}
+.card .nm{font-size:17px;margin-top:0}
+.card .meta{font-size:12.5px;margin-top:3px}
+.card .desc{font-size:13.5px;margin-top:6px;line-height:1.45}
+.card .x{width:30px;height:30px}
+.card .acts{gap:6px;margin-top:10px}
+.card .acts .ghostbtn{height:34px;padding:0 12px;font-size:13.5px}
+.card .acts #dirTo{height:34px;padding:0 14px}
+.sec{padding-top:10px;margin-top:10px}
+.sec h2{font-size:17px;margin-bottom:8px}
+.route .pins{height:52px}
+.route input{height:38px;font-size:15px}
+.dacts{margin-top:8px;gap:8px}
+.primary{height:38px;padding:0 16px;font-size:14.5px}
+.chipbtn{height:36px;padding:0 13px;font-size:13.5px}
+.chips{padding-bottom:8px}
+
 /* ---------- desktop: floating side panel ---------- */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brandlogo{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)!important}}
 :root[data-theme="dark"] .brandlogo{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)!important}
 @media (min-width:900px){
-  .topbar{top:16px;left:16px;right:auto;width:360px}
+  .topbar{top:16px;left:16px;right:auto;width:340px}
   /* the panel hugs its content and only grows when there are results or steps to show */
-  .sheet{top:76px;left:16px;bottom:auto;right:auto;width:360px;height:auto;max-height:calc(100% - 92px);border-radius:var(--r-lg);transform:none!important;transition:none}
+  .sheet{top:76px;left:16px;bottom:auto;right:auto;width:340px;height:auto;max-height:calc(100% - 92px);border-radius:var(--r-lg);transform:none!important;transition:none}
   .grab{display:none}
   .sheet-body{flex:0 1 auto;padding:12px 16px 16px}
   .sec{padding-top:12px;margin-top:12px}
   .sec h2{font-size:17px;margin-bottom:8px}
-  .brand{left:392px;bottom:16px}
+  .brand{left:372px;bottom:16px}
   .brand .brandlogo{width:36px;height:43px}
   .brand h1{font-size:25px}
   /* all quick buttons visible: compact chips that wrap instead of a hidden sideways scroll */
   .chips{flex-wrap:wrap;overflow:visible;gap:6px;margin:0;padding:2px 0 4px}
-  .chipbtn{height:32px;padding:0 11px;font-size:13px;gap:5px}
+  .chipbtn{height:30px;padding:0 10px;font-size:12.5px;gap:5px}
   .chipbtn .dot{width:8px;height:8px}
   .list{margin:0 -16px}.row{padding-inline:16px}
-  .badge{top:16px;left:392px}
+  .badge{top:16px;left:372px}
   .mapctl{top:16px;right:16px}
-  .eta{top:68px;left:392px}
+  .eta{top:68px;left:372px}
   .hint{bottom:16px;left:auto;right:16px;transform:none}
   .info{left:auto;right:76px;top:16px;bottom:16px;width:380px;max-height:none}
-  .card{left:392px;right:auto;bottom:16px;width:380px;max-height:calc(100% - 100px)}
+  .card .acts .ghostbtn{padding:0 10px}.card .acts #dirTo{padding:0 12px}
+  .card{left:372px;right:auto;bottom:16px;width:340px;max-height:calc(100% - 100px)}
   .app.card-open .sheet{transform:none}
 }
 </style>

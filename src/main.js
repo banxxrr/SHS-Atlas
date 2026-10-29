@@ -670,7 +670,28 @@ const SYN={library:['learning center','ilc','library'],libraries:['learning cent
   auditorium:['auditorium','performing arts','theat','recital'],theater:['theat','performing arts','auditorium'],theatre:['theat','performing arts','auditorium'],
   elevator:['elevator'],stairs:['stair'],office:['main office','office'],attendance:['attendance'],nurse:['nurse','health office']};
 const pubTxt=r=>r.psrc&&r.note? r.note.split(PLAN_NOTE)[0].toLowerCase() : '';
+/* every public restroom (not the ones inside or attached to a locker room) */
+const RR_RE=/\brr\b|restroom|toilet|washroom/i;
+let RR_ALL=null;
+function allRestrooms(){ if(RR_ALL) return RR_ALL;
+  // public = it has a doorway onto a hallway. Restrooms whose only door opens into a locker room are left out.
+  const inPoly=(x,z,P)=>{ let c=false; for(let i=0,j=P.length-1;i<P.length;j=i++){ const [xi,zi]=P[i],[xj,zj]=P[j]; if((zi>z)!==(zj>z)&&x<(xj-xi)*(z-zi)/(zj-zi)+xi) c=!c; } return c; };
+  const halls=rooms.filter(r=>r.kind==='hall'&&r.shape);
+  const inHall=(f,x,z)=>halls.some(h=>h.floor===f&&x>=h.x0&&x<=h.x1&&z>=h.z0&&z<=h.z1&&inPoly(x,z,h.shape));
+  const opensToHall=r=>DOORS.some(([f,x1,z1,x2,z2],di)=>{ if(f!==r.floor||DOOR_DROP.has(di)) return false;
+    const mx=(x1+x2)/2, mz=(z1+z2)/2; if(Math.max(r.x0-mx,mx-r.x1,0)>1||Math.max(r.z0-mz,mz-r.z1,0)>1) return false;
+    const L=Math.hypot(x2-x1,z2-z1)||1, nx=-(z2-z1)/L, nz=(x2-x1)/L;
+    return inHall(f,mx+nx*1.2,mz+nz*1.2)||inHall(f,mx-nx*1.2,mz-nz*1.2); });
+  const lockers=rooms.filter(r=>r.kind==='room'&&/locker|shower/i.test(r.name||''));
+  const touches=r=>lockers.some(l=>l.floor===r.floor&&Math.max(r.x0-l.x1,l.x0-r.x1,0)<1.2&&Math.max(r.z0-l.z1,l.z0-r.z1,0)<1.2);
+  const byNum={}; for(const q of rooms) if(q.num) byNum[q.floor+':'+q.num]=q;
+  const inLockerSuite=r=>{ const b=(r.num||'').match(/^(\d{4})[A-Z]$/); const p=b&&byNum[r.floor+':'+b[1]]; return !!(p&&/locker|shower/i.test(p.name||'')) || !!(r.mergeInto&&/locker|shower/i.test(r.mergeInto.name||'')); };
+  RR_ALL=rooms.filter(r=>r.kind==='room'&&!r.ground&&RR_RE.test(disp(r).name||'')&&!/locker|shower|coach|staff/i.test(disp(r).name)
+      &&!inLockerSuite(r)&&(!touches(r)||opensToHall(r)))
+    .sort((a,b)=>(a.bld>b.bld?1:a.bld<b.bld?-1:0)||a.floor-b.floor||sortKey(a).localeCompare(sortKey(b),undefined,{numeric:true}));
+  return RR_ALL; }
 function searchRooms(s){
+  if(/^(bathrooms?|restrooms?|toilets?|washrooms?|rr|rrs|potty|loo)$/.test(s)) return allRestrooms();
   const words=s.split(/\s+/).filter(Boolean), terms=SYN[s]||(words.length===1&&SYN[words[0]])||[s];
   const isNum=/^\d{2,4}[a-z]?$/.test(s), out=[];
   for(const r of confirmed.concat(pick.filter(r=>!r.conf&&edits[r.id]))){ if(r.ground&&!r.name) continue;

@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap">
 <style>
 :root{
-  --bg:#f3f4f1; --panel:#ffffff; --raise:#ffffff; --fg:#14171c; --muted:#5d6670; --line:#e3e6ea; --line-strong:#cfd4da;
+  --bg:#f3f4f1; --panel:#ffffff; --raise:#ffffff; --fg:#141414; --muted:#666666; --line:#e3e6ea; --line-strong:#cfd4da;
   --accent:#007236; --accent-ink:#ffffff; --accent-soft:#e0f0e6; --pine:#007236; --gold:#e8c703; --gold-ink:#241a00; --route:#e0202b; --route-case:#ffffff; --ok:#1d7a46; --ok-soft:#e5f4ea; --warn:#9a5b00; --warn-soft:#fdf1dc;
   --shadow:0 1px 2px rgba(20,23,28,.08),0 6px 20px rgba(20,23,28,.12); --shadow-lg:0 2px 6px rgba(20,23,28,.08),0 18px 48px rgba(20,23,28,.18);
   --scene:#eef0ec; --ground:#e9ebe6; --edge:#5b6672; --plate:#d9dde2; --corr:#eceff2;
@@ -22,23 +22,23 @@
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#17191d; --panel:#24272c; --raise:#2c3036; --fg:#eef1f4; --muted:#a3acb6; --line:#363b42; --line-strong:#454b53;
-  --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#17191d; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
+  --bg:#141414; --panel:#202020; --raise:#2a2a2a; --fg:#f2f2f2; --muted:#ababab; --line:#383838; --line-strong:#4a4a4a;
+  --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#141414; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.45); --shadow-lg:0 2px 6px rgba(0,0,0,.4),0 18px 48px rgba(0,0,0,.55);
-  --scene:#1b1d21; --ground:#202328; --edge:#9aa4ae; --plate:#2c3036; --corr:#2a2e34;
-  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
-  --t-class:#3a3f46; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
-  --t-svc:#4c4669; --t-staff:#31353b; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2c3036;
-  --lot:#2a2d32; --road:#3a3f46; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }}
+  --scene:#181818; --ground:#1e1e1e; --edge:#9aa4ae; --plate:#2a2a2a; --corr:#282828;
+  --hall:#5e6b7b; --hall-tag:#202020; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
+  --t-class:#3a3a3a; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
+  --t-svc:#4c4669; --t-staff:#333333; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2a2a2a;
+  --lot:#272727; --road:#3a3a3a; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#17191d; --panel:#24272c; --raise:#2c3036; --fg:#eef1f4; --muted:#a3acb6; --line:#363b42; --line-strong:#454b53;
-  --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#17191d; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
+  --bg:#141414; --panel:#202020; --raise:#2a2a2a; --fg:#f2f2f2; --muted:#ababab; --line:#383838; --line-strong:#4a4a4a;
+  --accent:#12aa4c; --accent-ink:#04170b; --accent-soft:#163322; --pine:#12aa4c; --gold:#e8c703; --gold-ink:#241a00; --route:#ff4f55; --route-case:#141414; --ok:#6fd39a; --ok-soft:#173326; --warn:#f2bd60; --warn-soft:#3a2d14;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.45); --shadow-lg:0 2px 6px rgba(0,0,0,.4),0 18px 48px rgba(0,0,0,.55);
-  --scene:#1b1d21; --ground:#202328; --edge:#9aa4ae; --plate:#2c3036; --corr:#2a2e34;
-  --hall:#5e6b7b; --hall-tag:#24272c; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
-  --t-class:#3a3f46; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
-  --t-svc:#4c4669; --t-staff:#31353b; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2c3036;
-  --lot:#2a2d32; --road:#3a3f46; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }
+  --scene:#181818; --ground:#1e1e1e; --edge:#9aa4ae; --plate:#2a2a2a; --corr:#282828;
+  --hall:#5e6b7b; --hall-tag:#202020; --hall-ink:#d3dae2; --wall:#e3e8ee; --door:#f5c400; --stairs:#8a6d4c;
+  --t-class:#3a3a3a; --t-lab:#2c5a52; --t-arts:#6a4049; --t-ath:#344d6e; --t-comm:#6b5730;
+  --t-svc:#4c4669; --t-staff:#333333; --t-lib:#33573a; --t-link:#3a4a5a; --t-out:#2f4e2b; --t-unk:#2a2a2a;
+  --lot:#272727; --road:#3a3a3a; --water:#24425f; --track:#7a4634; --field:#2f4a2a; color-scheme:dark }
 
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -288,6 +288,22 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
   .card{left:372px;right:auto;bottom:16px;width:340px;max-height:calc(100% - 100px)}
   .app.card-open .sheet{transform:none}
 }
+
+/* ---- UI chrome: flat Patriot gold, black ink, crisp edge (no soft glow) ---- */
+.searchpill,.badge,.seg,.roundbtn,.hint,.sheet,.info,.card{
+  --panel:#e8c703; --bg:#f7e77e; --raise:#f7e77e; --fg:#141200; --muted:#4a4100;
+  --line:#b89d00; --line-strong:#141200; --accent:#00552a; --accent-ink:#ffffff; --accent-soft:#f7e77e;
+  --ok:#00552a; --ok-soft:#f7e77e; --warn:#6b3a00; --warn-soft:#f7e77e;
+  background:var(--panel); color:var(--fg); border:2px solid #141200; box-shadow:none }
+.sheet{border-bottom:0}
+.searchpill input::placeholder{color:#4a4100;opacity:1}
+.searchpill input,.sheet input,.sheet select,.card input,.info input{color:#141200}
+.eta{background:var(--accent);color:#fff;border:2px solid #141200;box-shadow:none}
+.eta .iconbtn{color:#fff}
+.tip{box-shadow:none}
+.brand{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)!important}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brand{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)!important}}
+:root[data-theme="dark"] .brand{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)!important}
 </style>
 
 <div class="app" id="app">

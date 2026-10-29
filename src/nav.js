@@ -76,11 +76,21 @@ const NAV=(()=>{
   function smooth(f,cells){ if(cells.length<3) return cells; const out=[cells[0]]; let a=0;
     while(a<cells.length-1){ let c=a+1; for(let k=Math.min(cells.length-1,a+300);k>a+1;k--){ if(clear(f,cells[a],cells[k])){ c=k; break; } } out.push(cells[c]); a=c; }
     return out; }
-  function viaNames(L){ const names=[]; for(let n=0;n<L.pts.length-1;n++){ const [ax,az]=L.pts[n],[bx,bz]=L.pts[n+1], len=Math.hypot(bx-ax,bz-az);
-      for(let s=0;s<=len;s+=3){ const x=ax+(bx-ax)*s/Math.max(len,1e-6), z=az+(bz-az)*s/Math.max(len,1e-6); let best=null,bd=7;
-        for(const [f,t,lx,lz] of HALL_LABELS){ if(f!==L.floor) continue; const d=Math.hypot(lx-x,lz-z); if(d<bd){ bd=d; best=t; } }
-        if(best&&names[names.length-1]!==best) names.push(best); } }
-    return names.filter((n,i)=>names.indexOf(n)===i).slice(0,5); }
+  // describe a leg by the landmarks you walk past (commons, library, gym…), not facilities hallway codes
+  const LANDMARK=/commons|learning center|ilc|library|main office|student services|nurse|field house|sports center|fitness|aquatic|natatorium|caf[eé]|servery|snack|auditorium|theat|recital|performing|forum|atrium|lobby|book ?store|attendance|testing|college & career|hydration|wellness|little patriots/i;
+  const LMK={};
+  function viaNames(L){ const C=LMK[L.floor]||(LMK[L.floor]=rooms.filter(r=>r.floor===L.floor&&r.kind==='room'&&r.conf&&!r.mergeInto&&LANDMARK.test(disp(r).name)));
+    const names=[];
+    for(let n=0;n<L.pts.length-1;n++){ const [ax,az]=L.pts[n],[bx,bz]=L.pts[n+1], len=Math.hypot(bx-ax,bz-az);
+      for(let s=0;s<=len;s+=3){ const x=ax+(bx-ax)*s/Math.max(len,1e-6), z=az+(bz-az)*s/Math.max(len,1e-6); let best=null,bd=4;
+        for(const r of C){ const dx=Math.max(r.x0-x,0,x-r.x1), dz=Math.max(r.z0-z,0,z-r.z1), d=Math.hypot(dx,dz); if(d<bd){ bd=d; best=disp(r).name; } }
+        if(best&&!names.includes(best)) names.push(best); } }
+    if(names.length) return names.length<=3? names : [names[0],names[names.length>>1],names[names.length-1]];
+    // nothing notable nearby: fall back to plain hallway names (codes stripped)
+    const h=[]; for(let n=0;n<L.pts.length;n+=Math.max(1,L.pts.length>>3)){ const [x,z]=L.pts[n]; let best=null,bd=7;
+      for(const [f,t,lx,lz] of HALL_LABELS){ if(f!==L.floor) continue; const d=Math.hypot(lx-x,lz-z); if(d<bd){ bd=d; best=hallName(t); } }
+      if(best&&!h.includes(best)) h.push(best); }
+    return h.slice(0,2).map(x=>'the '+x); }
   return {route,build,get ready(){return built;},_dbg:()=>({cost,LINKS,GW,GH,RES,X0,Z0})};
 })();
 

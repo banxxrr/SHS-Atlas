@@ -12,9 +12,10 @@ function findRoom(str){ const s=(str||'').trim(); if(!s) return null; const m=s.
   const part=cand.filter(r=>r.conf&&(disp(r).name+' '+disp(r).num).toLowerCase().includes(q)); return part.sort((a,b)=>(b.major||0)-(a.major||0))[0]||null; }
 const fmtM=m=>`${Math.round(m/5)*5} m`, fmtT=m=>{ const s=m/1.25; return s<60?'under a minute':`about ${Math.round(s/60)} min`; };
 const roomTag=r=>{ const d=disp(r); return d.num?`${d.num} ${d.name}`:d.name; };
+const andList=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 function describe(R){ const out=[]; if(R.through&&isPool(R.from)) out.push({floor:R.through.floor,text:`Leave the pool through ${roomTag(R.through)}.`}); R.legs.forEach((L,i)=>{
     if(i>0){ const prev=R.legs[i-1], via=prev.exit||L.enter; out.push({floor:L.floor,text:`Take the ${via?via.name:'stairs'} ${L.floor>prev.floor?'up':'down'} to level ${L.floor}.`}); }
-    out.push({floor:L.floor,text:`Level ${L.floor}: walk ${fmtM(L.len)}${L.via.length?' via '+L.via.join(' → '):''}${i===R.legs.length-1?(R.through&&isPool(R.to)?`, then through ${roomTag(R.through)} onto the pool deck`:` to ${roomTag(R.to)}`):''}.`}); });
+    out.push({floor:L.floor,text:`Level ${L.floor}: walk ${fmtM(L.len)}${(v=>v.length?' past '+andList(v):'')(L.via.filter(v=>v!==disp(R.to).name&&v!==disp(R.from).name&&!(R.from.mergeInto&&v===disp(R.from.mergeInto).name)&&!(R.to.mergeInto&&v===disp(R.to.mergeInto).name)))}${i===R.legs.length-1?(R.through&&isPool(R.to)?`, then through ${roomTag(R.through)} onto the pool deck`:` to ${roomTag(R.to)}`):''}.`}); });
   return out; }
 function showRoute(R,label){
   const out=$('dOut'); if(!R){ clearRoute(); out.innerHTML='<div class="dmsg">No walking route found between those rooms.</div>'; return; }

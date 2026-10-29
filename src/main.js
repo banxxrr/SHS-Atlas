@@ -81,6 +81,7 @@ const E_COURT=[[91,-89.5],[90.5,-85.5],[93.5,-85.5],[93,-63.5],[90,-63.5],[90,-6
 /*PLAN*/
 /*DOORS*/
 /*HALLS2*/
+/*SUITES*/
 /*HALLS*/
 /*VLINKS*/
 const unpack=a=>{ const o=[]; for(let i=0;i<a.length;i+=2) o.push([a[i],a[i+1]]); return o; };
@@ -462,7 +463,8 @@ const WALLSEG={};
       let t0=0,t1=1; const clip=(p,q)=>{ if(Math.abs(p)<1e-9) return q>=0; const r=q/p; if(p<0){ if(r>t1) return false; if(r>t0) t0=r; } else { if(r<t0) return false; if(r<t1) t1=r; } return true; };
       const dx=Q[0]-P[0], dy=Q[1]-P[1];
       if(clip(-dx,P[0]-.03)&&clip(dx,D.L-.03-P[0])&&clip(-dy,P[1]+D.d)&&clip(dy,D.d-P[1])&&t1-t0>.001) (CUT[i]=CUT[i]||[]).push([t0,t1]); } });
-  PLAN_S.forEach(([f,gl,x1,z1,x2,z2,t],i)=>{ if(!CUT[i]){ add_(f,gl,[x1,z1,x2,z2,t]); return; }
+  PLAN_S.forEach(([f,gl,x1,z1,x2,z2,t],i)=>{ if(WALL_DROP.has(i)) return; // inner walls of merged suites
+    if(!CUT[i]){ add_(f,gl,[x1,z1,x2,z2,t]); return; }
     // keep only the parts of this wall that aren't a doorway
     const cs=CUT[i].sort((p,q)=>p[0]-q[0]); let u0=0; const at=u=>[x1+(x2-x1)*u,z1+(z2-z1)*u];
     for(const [a,b] of cs.concat([[1,1]])){ if(a-u0>.002) add_(f,gl,[...at(u0),...at(a),t]); u0=Math.max(u0,b); } });
@@ -475,10 +477,10 @@ const WALLSEG={};
 const doorMeshes=[];
 // each doorway gets a gold frame: a low threshold across the gap, full-height posts on both sides, and a header across the top
 { const sill={}, post={}, head={}, push=(o,f,v)=>(o[f]=o[f]||[]).push(v);
-  for(const [f,x1,z1,x2,z2,t] of DOORS){ const L=Math.hypot(x2-x1,z2-z1); if(L<.3) continue; const ux=(x2-x1)/L, uz=(z2-z1)/L, d=Math.max(.5,t*2.2), pw=.16;
+  DOORS.forEach(([f,x1,z1,x2,z2,t],di)=>{ if(DOOR_DROP.has(di)) return; const L=Math.hypot(x2-x1,z2-z1); if(L<.3) return; const ux=(x2-x1)/L, uz=(z2-z1)/L, d=Math.max(.5,t*2.2), pw=.16;
     push(sill,f,[x1,z1,x2,z2,d]);
     push(head,f,[x1-ux*pw,z1-uz*pw,x2+ux*pw,z2+uz*pw,d]);
-    push(post,f,[x1-ux*pw,z1-uz*pw,x1+ux*.04,z1+uz*.04,d]); push(post,f,[x2-ux*.04,z2-uz*.04,x2+ux*pw,z2+uz*pw,d]); }
+    push(post,f,[x1-ux*pw,z1-uz*pw,x1+ux*.04,z1+uz*.04,d]); push(post,f,[x2-ux*.04,z2-uz*.04,x2+ux*pw,z2+uz*pw,d]); });
   const mat=new THREE.MeshBasicMaterial({color:0xe8c703,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});
   for(const f in sill){ const y0=(f-1)*FH+PLATE;
     for(const [list,H,y] of [[sill[f],.12,.02],[post[f],WALL_H+.06,0],[head[f],.45,WALL_H-.39]]){ const m=new THREE.Mesh(segGeo(list,H),mat);
@@ -496,6 +498,15 @@ const stairMeshes=[];
     HALL_LABELS.push([1,'Atrium stairs',(a.x0+a.x1)/2,(a.z0+a.z1)/2]);
     VLINKS.push(['s','Atrium stairs',(a.x0+a.x1)/2,a.z0+1,[1,2]]); } }
 
+/* facilities hallway codes (L10, 1400H, 6B…) mean nothing to visitors: strip the code, hide labels that are only a code */
+function hallName(t){ const n=t.replace(/^(?:[A-Z]{0,2}\d+[A-Z]?|[A-Z]\d*)\s+/,'').replace(/\s+[A-Z]{1,2}\d+[A-Z]?$/,'').trim(); return /^(corridor|passageway|hallway|hall|corr\.?)$/i.test(n)||!n? '' : n; }
+/* ---- suites: back rooms (offices, storage, showers…) become part of their suite: one space, one label, one card ---- */
+{ const byNum={}; for(const r of rooms) if(r.kind==='room'&&r.num) byNum[r.floor+':'+r.num]=r;
+  for(const [f,c,p] of SUITE_MERGE){ const kid=byNum[f+':'+c], par=byNum[f+':'+p]; if(kid&&par&&kid!==par){ kid.mergeInto=par; kid.type=par.type; } }
+  for(const [f,nm,cx,cz,p] of SUITE_LOOSE){ const par=byNum[f+':'+p]; const kid=rooms.find(r=>r.floor===f&&r.kind==='room'&&!r.num&&r.name===nm&&Math.abs((r.x0+r.x1)/2-cx)<3&&Math.abs((r.z0+r.z1)/2-cz)<3); if(kid&&par){ kid.mergeInto=par; kid.type=par.type; } }
+  // the suite is drawn as one block in the shape of the whole suite
+  for(const [f,p,flat] of SUITE_SHAPE){ const par=byNum[f+':'+p]; if(!par) continue; par.shape=unpack(flat); Object.assign(par,bboxOf(par.shape)); } }
+
 /* ---- interior room meshes ---- */
 const meshes=[];
 for(const r of rooms){
@@ -506,8 +517,8 @@ for(const r of rooms){
     y = r.kind==='plate'? y0+PLATE/2 : r.kind==='hall'? y0+PLATE+.04 : r.ground? h/2 : y0+PLATE+h/2; }
   const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:0xffffff,transparent:true}));
   if(r.shape) m.position.set(0,y,0); else m.position.set((r.x0+r.x1)/2,y,(r.z0+r.z1)/2);
-  m.userData.r=r; scene.add(m); r.mesh=m; r.topY=(r.shape? y : y-h/2)+h;
-  if(r.kind==='room'||r.kind==='court'){ const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo,30),new THREE.LineBasicMaterial({color:0x333333,transparent:true})); m.add(e); r.edges=e; meshes.push(m); }
+  m.userData.r=r; scene.add(m); r.mesh=m; if(r.mergeInto) m.visible=false; r.topY=(r.shape? y : y-h/2)+h;
+  if(r.kind==='room'||r.kind==='court'){ const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo,30),new THREE.LineBasicMaterial({color:0x333333,transparent:true})); m.add(e); r.edges=e; if(r.mergeInto) e.visible=false; meshes.push(m); }
 }
 for(const s of shells) meshes.push(s.mesh);
 const pick=rooms.filter(r=>r.kind==='room'||r.kind==='court');
@@ -542,6 +553,7 @@ function centerOf(r){ return [(r.x0+r.x1)/2,(r.z0+r.z1)/2]; }
 const MINOR=/^(|room|rm|office|offices|ss office|.*\bstorage\b.*|electrical|cogen electrical|custodial|maintenance|mech\.?|mech\.? ?(room|rm)|mechanical( rm| room)?|chiller.*|boiler.*|idf|mdf|panel ?boards|receiving|grounds|cooler|pantry|food prep|wash station|drying area|vestibule|copy room|mail room|chem\.? prep.*|equipment|equipment mgr\.? office|break room|staff lounge|director's office|psych|speech|changing rm|dressing rm|showers?|.*shower room|ada room|conference( rm)?|small group|kitchen|staff room|pool (filter|equipment) room)$/i, KEEP_OFFICE=/main|dean|counsel|nurse|attendance|student services|registrar|athletic|activities|principal|financial|security|testing/i;
 let SUITES=null;
 function roomLabel(r){
+  if(r.mergeInto){ if(r.label){ disposeSprite(r.label); r.label=null; } return; }
   if(!SUITES){ SUITES=new Set(); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&q.major) SUITES.add(q.num); for(const q of pick) if(q.num&&/^\d{4}$/.test(q.num)&&/services|office|suite|center/i.test(q.name||'')) SUITES.add(q.num); }
   if(r.label){ disposeSprite(r.label); r.label=null; }
   if(!r.conf && !edits[r.id]) return;
@@ -568,8 +580,8 @@ const markers=[['Door 45',-192,212],['Door 46',-110,223],['Door 1',-97,80],['Doo
 let areaSprites=[],siteSprites=[],hallSprites=[];
 function areaLabels(){
   areaSprites.forEach(disposeSprite); siteSprites.forEach(disposeSprite); hallSprites.forEach(disposeSprite);
-  hallSprites=HALL_LABELS.map(([f,t,x,z])=>{ const sp=makeSprite([{text:t,font:`700 22px ${C.body}`,size:22,color:C.hallInk}],{fill:C.hallTag}); const k=.075;
-    sp.scale.set(sp.userData.px.w*k,sp.userData.px.h*k,1); sp.position.set(x,(f-1)*FH+PLATE+1.4,z); sp.userData.floor=f; sp.renderOrder=9; scene.add(sp); return sp; });
+  hallSprites=HALL_LABELS.map(([f,t0,x,z])=>{ const t=hallName(t0); if(!t) return null; const sp=makeSprite([{text:t,font:`700 22px ${C.body}`,size:22,color:C.hallInk}],{fill:C.hallTag}); const k=.075;
+    sp.scale.set(sp.userData.px.w*k,sp.userData.px.h*k,1); sp.position.set(x,(f-1)*FH+PLATE+1.4,z); sp.userData.floor=f; sp.renderOrder=9; scene.add(sp); return sp; }).filter(Boolean);
   areaSprites=AREA.map(([t,x,y,z])=>{ const s=makeSprite([{text:t,font:`700 34px ${C.display}`,size:34,color:C.fg}]); const k=.19; s.scale.set(s.userData.px.w*k,s.userData.px.h*k,1); s.position.set(x,y,z); scene.add(s); return s; });
   siteSprites=[];
   for(const [t,x,z] of siteLabels){ const sp=makeSprite([{text:t,font:`700 36px ${C.display}`,size:36,color:C.panel}],{fill:C.fg}); const k=.22; sp.scale.set(sp.userData.px.w*k,sp.userData.px.h*k,1); sp.position.set(x,4,z); scene.add(sp); siteSprites.push(sp); }
@@ -602,7 +614,7 @@ function applyMode(){ inval();
     if(!out){ const N=+mode;
       if(r.ground){ vis=true; lab=N===1; }
       else if(r.floor>N) vis=false; else if(top(r)>=N) lab=true; else ghost=true; }
-    r.mesh.visible=vis; r.ghost=ghost; r.active=vis&&!ghost; r.showLab=lab&&vis;
+    r.mesh.visible=vis&&!r.mergeInto; r.ghost=ghost; r.active=vis&&!ghost; r.showLab=lab&&vis;
     const unk=r.type==='unk', see=r.glass&&r.active;
     r.mesh.material.opacity= ghost? .08 : see? .28 : unk? .75 : 1; r.mesh.material.depthWrite=!ghost && !see;
     if(r.edges) r.edges.material.opacity= ghost? .1 : unk? .45 : see? .9 : .6;
@@ -672,7 +684,8 @@ function searchRooms(s){
 function renderList(){
   const s=q.value.trim().toLowerCase();
   // no browse-all list: results only appear once something is typed
-  if(!s){ listEl.innerHTML=''; listEl.closest('.sec').hidden=true; return; } listEl.closest('.sec').hidden=false;
+  const sec=listEl.closest&&listEl.closest('.sec');
+  if(!s){ listEl.innerHTML=''; if(sec) sec.hidden=true; return; } if(sec) sec.hidden=false;
   const L=searchRooms(s);
   listEl.innerHTML=''; const frag=document.createDocumentFragment();
   if(/^\d{4}$/.test(s) && !L.some(r=>disp(r).num.includes(s)||(r.range||'')==='≈'+s)){
@@ -701,6 +714,7 @@ document.getElementById('stEst').textContent=pick.filter(r=>r.est3).length;
 /* ================= selection card ================= */
 const card=document.getElementById('card'); let editing=false, estNum=null;
 function select(r,fly){
+  if(r&&r.mergeInto) r=r.mergeInto; // a back room opens its suite
   const prev=selected; selected=r; editing=false;
   if(r && !r.ext && !r.ground && (mode==='all'||!onFloor(r,+mode))) mode=String(r.floor);
   if(prev&&prev!==r&&!prev.ext) roomLabel(prev);

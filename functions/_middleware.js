@@ -8,7 +8,7 @@
 const FALLBACK_HASH = '1a156e1d7914fd17a78f4397958299d63b79641fe6dc1c02f70ac046ee445059'; // sha256("shs-atlas:" + password)
 const COOKIE = 'shs_beta';
 // dev console: its code (/_dev/*) is only sent with a second cookie, set by the dev code (DEV_PASSWORD env var, else this hash)
-const DEV_FALLBACK_HASH = 'eadb0c3f27d4647fcd90c54a3a55f50ed357b43556f4af9ba52296ca63dc307d'; // sha256("shs-atlas-dev:" + code)
+const DEV_FALLBACK_HASH = '0f258daac991ed59d10bf7833b926b60e3319df6e12f67c62987888b84f3d60d'; // sha256("shs-atlas-dev:" + code)
 const DEV_COOKIE = 'shs_dev';
 const OPEN = ['/favicon.png', '/apple-touch-icon.png', '/logo.png'];
 

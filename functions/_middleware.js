@@ -10,6 +10,8 @@ const COOKIE = 'shs_beta';
 // dev console: its code (/_dev/*) is only sent with a second cookie, set by the dev code (DEV_PASSWORD env var, else this hash)
 const DEV_FALLBACK_HASH = '0f258daac991ed59d10bf7833b926b60e3319df6e12f67c62987888b84f3d60d'; // sha256("shs-atlas-dev:" + code)
 const DEV_COOKIE = 'shs_dev';
+const BAN_COOKIE = 'shs_ban';
+const BAN_SECS = 2 * 24 * 3600; // wrong dev code = locked out for 2 days (the page says it's permanent)
 const OPEN = ['/favicon.png', '/apple-touch-icon.png', '/logo.png'];
 
 const enc = new TextEncoder();
@@ -39,9 +41,28 @@ async function devToken(env) {
   return hex(await crypto.subtle.sign('HMAC', key, enc.encode('dev')));
 }
 
+async function banSig(env, exp) {
+  const key = await crypto.subtle.importKey('raw', enc.encode('ban:' + await devHash(env)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return hex(await crypto.subtle.sign('HMAC', key, enc.encode(String(exp))));
+}
+async function banned(req, env) {
+  const m = (req.headers.get('Cookie') || '').match(/(?:^|;\s*)shs_ban=(\d+)\.([a-f0-9]+)/);
+  if (!m || Number(m[1]) < Date.now()) return false;
+  return same(m[2], await banSig(env, m[1]));
+}
+const clearBan = `${BAN_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+
 export async function onRequest(ctx) {
   const { request, env, next } = ctx;
   const url = new URL(request.url);
+
+  // hidden way back in: the ban page's secret trigger posts the dev code here
+  if (url.pathname === '/__unban' && request.method === 'POST') {
+    const code = String((await request.formData()).get('code') || '').trim();
+    if (!same(await sha('shs-atlas-dev:' + code), await devHash(env))) { await new Promise(r => setTimeout(r, 1500)); return new Response('no', { status: 403 }); }
+    return new Response('ok', { headers: { 'Set-Cookie': clearBan, 'Cache-Control': 'no-store' } });
+  }
+  if (!OPEN.includes(url.pathname) && await banned(request, env)) return banPage();
 
   if (url.pathname === '/__lock') { // sign out of the beta (and dev) on this device
     return new Response(null, { status: 303, headers: [['Location', '/'], ['Set-Cookie', `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`], ['Set-Cookie', `${DEV_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`]] });
@@ -49,7 +70,11 @@ export async function onRequest(ctx) {
   if (url.pathname === '/__dev') {
     if (request.method !== 'POST' || !same(cookieOf(request), await token(env))) return new Response('no', { status: 403 });
     const code = String((await request.formData()).get('code') || '').trim();
-    if (!same(await sha('shs-atlas-dev:' + code), await devHash(env))) { await new Promise(r => setTimeout(r, 1500)); return new Response('no', { status: 403 }); }
+    if (!same(await sha('shs-atlas-dev:' + code), await devHash(env))) {
+      await new Promise(r => setTimeout(r, 1500));
+      const exp = Date.now() + BAN_SECS * 1000;
+      return new Response('no', { status: 403, headers: { 'Set-Cookie': `${BAN_COOKIE}=${exp}.${await banSig(env, exp)}; Path=/; Max-Age=${BAN_SECS}; HttpOnly; Secure; SameSite=Lax`, 'Cache-Control': 'no-store' } });
+    }
     return new Response('ok', { headers: { 'Set-Cookie': `${DEV_COOKIE}=${await devToken(env)}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Strict`, 'Cache-Control': 'no-store' } });
   }
   if (url.pathname.startsWith('/_dev/')) {
@@ -118,4 +143,31 @@ function lockPage(back, wrong) {
 <script>/* keep #room=… links working after unlocking */ var b=document.getElementById('back'); if(location.hash) b.value=b.value.split('#')[0]+location.hash;</script>
 </body></html>`;
   return new Response(html, { status: wrong ? 401 : 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+}
+
+function banPage() {
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Access denied</title><meta name="robots" content="noindex"><link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  body { margin:0; min-height:100vh; display:grid; place-items:center; background:#0b0b0b; color:#eee; font:17px/1.5 Verdana,Geneva,Tahoma,sans-serif; text-align:center; padding:24px; box-sizing:border-box; }
+  h1 { color:#ff3b3b; font-size:34px; margin:0 0 12px; letter-spacing:.02em; }
+  p { margin:6px 0; color:#bbb; } code { color:#888; font-size:13px; }
+  #dot { cursor:default; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent; }
+</style></head>
+<body><div>
+  <h1>&#9940; ACCESS PERMANENTLY REVOKED</h1>
+  <p>This device has been banned from SHS Atlas for attempting unauthorized access.</p>
+  <p>This action is permanent and cannot be appealed<span id="dot">.</span></p>
+  <p><code>ERR_DEVICE_BLACKLISTED</code></p>
+</div>
+<script>
+// secret: tap the period after "appealed" 5 times quickly, then enter the dev code
+(function(){ var t=[]; document.getElementById('dot').addEventListener('click', async function(){
+  var n=Date.now(); t=t.filter(function(x){return n-x<2500}); t.push(n); if(t.length<5) return; t=[];
+  var c=prompt(''); if(!c) return; var f=new FormData(); f.set('code',c);
+  var r=await fetch('/__unban',{method:'POST',body:f,credentials:'same-origin'}).catch(function(){return null});
+  if(r&&r.ok) location.href='/'; }); })();
+</script></body></html>`;
+  return new Response(html, { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }

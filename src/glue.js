@@ -83,7 +83,7 @@ window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,di
 { let buf='', taps=[];
   // wrong dev code: red flash (3 flashes in 1s, under the 3-per-second seizure-safety limit), then the message stays up for a moment
   const nope=()=>{ const o=document.createElement('div'); o.id='nope'; o.textContent='STOP TRYING IT WONT WORK JOSH \u{1F639}\u{1F639}\u{1F639}\u{1F639}';
-    document.body.appendChild(o); setTimeout(()=>o.remove(),2600); o.onclick=()=>o.remove(); };
+    document.body.appendChild(o); const go=()=>location.reload(); setTimeout(go,2600); o.onclick=go; };
   const openDev=async()=>{ if(document.getElementById('atlasDev')) return;
     if(typeof __ATLAS_DEV_INLINE==='function'){ __ATLAS_DEV_INLINE(); return; }
     const load=()=>new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='/_dev/console.js?'+Date.now(); s.onload=ok; s.onerror=no; document.head.appendChild(s); });

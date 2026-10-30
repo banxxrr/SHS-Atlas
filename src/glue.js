@@ -81,13 +81,16 @@ window.__atlas={THREE,scene,camera,controls,renderer,rooms,NAV,setMode,select,di
     'staff rooms':()=>rooms.filter(r=>r.staff&&r.mesh).map(r=>r.mesh), hallways:()=>rooms.filter(r=>r.kind==='hall'&&r.mesh).map(r=>r.mesh),
     'room labels':()=>rooms.filter(r=>r.label).map(r=>r.label), 'hall labels':()=>hallSprites, site:()=>siteMeshes.map(s=>s.mesh), stairs:()=>stairMeshes})};
 { let buf='', taps=[];
+  // wrong dev code: red flash (3 flashes in 1s, under the 3-per-second seizure-safety limit), then the message stays up for a moment
+  const nope=()=>{ const o=document.createElement('div'); o.id='nope'; o.textContent='STOP TRYING IT WONT WORK JOSH \u{1F639}\u{1F639}\u{1F639}\u{1F639}';
+    document.body.appendChild(o); setTimeout(()=>o.remove(),2600); o.onclick=()=>o.remove(); };
   const openDev=async()=>{ if(document.getElementById('atlasDev')) return;
     if(typeof __ATLAS_DEV_INLINE==='function'){ __ATLAS_DEV_INLINE(); return; }
     const load=()=>new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='/_dev/console.js?'+Date.now(); s.onload=ok; s.onerror=no; document.head.appendChild(s); });
     let r=await fetch('/_dev/console.js',{method:'HEAD',credentials:'same-origin'}).catch(()=>null);
     if(!r||!r.ok){ const code=prompt('Dev code'); if(!code) return;
       const fd=new FormData(); fd.set('code',code); r=await fetch('/__dev',{method:'POST',body:fd,credentials:'same-origin'}).catch(()=>null);
-      if(!r||!r.ok){ alert('Nope.'); return; } }
+      if(!r||!r.ok){ nope(); return; } }
     load().catch(()=>alert('Dev console failed to load.')); };
   document.addEventListener('keydown',e=>{ const t=document.activeElement&&document.activeElement.tagName; if(t==='INPUT'||t==='TEXTAREA') return;
     buf=(buf+e.key.toLowerCase()).slice(-8); if(buf==='atlasdev'){ buf=''; openDev(); } });

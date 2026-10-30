@@ -93,7 +93,7 @@
 
   // ---- tools
   $('dvTheme').onclick=()=>{ const h=document.documentElement, cur=h.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); h.setAttribute('data-theme',cur==='dark'?'light':'dark'); };
-  $('dvClear').onclick=()=>{ if(!confirm('Clear saved edits, Plan my day and locker choice on this device?')) return; ['shs-map-edits-v3','shs-map-day-v1','shs-map-locker'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); location.reload(); };
+  $('dvClear').onclick=()=>{ if(!confirm('Clear saved edits, Schedule builder and locker choice on this device?')) return; ['shs-map-edits-v3','shs-map-day-v1','shs-map-locker'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); location.reload(); };
   $('dvLock').onclick=()=>{ location.href='/__lock'; };
   $('dvReload').onclick=()=>location.reload();
   paint();

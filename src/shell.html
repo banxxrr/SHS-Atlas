@@ -304,6 +304,10 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
 .brand{filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)!important}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .brand{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)!important}}
 :root[data-theme="dark"] .brand{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)!important}
+#nope{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:#ff0000;color:#fff;text-align:center;
+  font:700 clamp(28px,8vw,72px)/1.1 "Comic Sans MS","Comic Sans","Comic Neue","Chalkboard SE",cursive;text-shadow:0 3px 0 #000;animation:nope 1s steps(1) 1}
+@keyframes nope{0%,34%,67%{background:#ff0000}17%,50%,84%{background:#000}}
+@media (prefers-reduced-motion:reduce){#nope{animation:none}}
 </style>
 
 <div class="app" id="app">
@@ -357,7 +361,7 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
       <div class="sec dir">
         <div class="dirbar">
           <button id="openDir" class="dirchip" type="button" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12Z"/><path d="M9 14v-3h5M12 8.5 14.5 11 12 13.5"/></svg>Directions</button>
-          <button id="openDay" class="dirchip" type="button" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Plan my day</button>
+          <button id="openDay" class="dirchip" type="button" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Schedule builder</button>
         </div>
         <div id="dirForm" hidden>
         <div class="route">
@@ -372,7 +376,7 @@ svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-widt
             <button id="dClear" class="ghostbtn" type="button">Clear</button>
           </div>
         </div>
-        <details class="day" id="dayForm" hidden><summary hidden>Plan my day</summary>
+        <details class="day" id="dayForm" hidden><summary hidden>Schedule builder</summary>
           <div id="dayList" class="daylist"></div>
           <button id="dayGo" class="ghostbtn" type="button">Route my day</button>
           <div class="fine">Saved on this device. Pool periods go through the locker room you last picked.</div>
